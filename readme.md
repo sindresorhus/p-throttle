@@ -64,6 +64,9 @@ Type: `number`
 
 Timespan for `limit`.
 
+### throttledFn.abort()
+
+Abort pending executions (all unresolved promises are rejected).
 
 ## Related
 
