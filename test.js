@@ -38,6 +38,6 @@ test('can be aborted', async t => {
 	} catch (err) {
 		error = err;
 	}
-	t.is(error.message, 'Throttled function aborted');
+	t.true(error instanceof m.AbortError);
 	t.true(end() < 100);
 });

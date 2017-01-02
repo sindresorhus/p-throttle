@@ -1,5 +1,5 @@
 'use strict';
-module.exports = (fn, limit, interval) => {
+const pThrottle = (fn, limit, interval) => {
 	if (!Number.isFinite(limit)) {
 		throw new TypeError('Expected `limit` to be a finite number');
 	}
@@ -55,10 +55,18 @@ module.exports = (fn, limit, interval) => {
 		timeouts.clear();
 
 		for (const x of queue) {
-			x.reject(new Error('Throttled function aborted'));
+			x.reject(new pThrottle.AbortError('Throttled function aborted'));
 		}
 		queue.length = 0;
 	};
 
 	return throttled;
 };
+
+pThrottle.AbortError = class AbortError extends Error {
+	constructor(message) { // eslint-disable-line no-useless-constructor
+		super(message);
+	}
+};
+
+module.exports = pThrottle;
