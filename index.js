@@ -9,7 +9,7 @@ module.exports = (fn, limit, interval) => {
 	}
 
 	const queue = [];
-	const timeouts = [];
+	const timeouts = new Set();
 	let activeCount = 0;
 
 	const next = () => {
@@ -22,13 +22,10 @@ module.exports = (fn, limit, interval) => {
 				next();
 			}
 
-			const i = timeouts.indexOf(id);
-			if (i !== -1) {
-				timeouts.splice(i, 1);
-			}
+			timeouts.delete(id);
 		}, interval);
 
-		timeouts.push(id);
+		timeouts.add(id);
 
 		const x = queue.shift();
 		x.resolve(fn.apply(x.self, x.args));
@@ -55,6 +52,8 @@ module.exports = (fn, limit, interval) => {
 		for (const id of timeouts) {
 			clearTimeout(id);
 		}
+		timeouts.clear();
+
 		for (const x of queue) {
 			x.reject(new Error('Throttled function aborted'));
 		}
