@@ -64,6 +64,9 @@ Type: `number`
 
 Timespan for `limit`.
 
+### throttledFn.abort()
+
+Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` custom error.
 
 ## Related
 
