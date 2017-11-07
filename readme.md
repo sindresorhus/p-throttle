@@ -62,7 +62,7 @@ Maximum number of calls within an `interval`.
 
 Type: `number`
 
-Timespan for `limit`.
+Timespan for `limit` in milliseconds.
 
 ### throttledFn.abort()
 
