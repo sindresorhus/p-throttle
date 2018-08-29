@@ -1,5 +1,12 @@
 'use strict';
 
+class AbortError extends Error {
+	constructor() {
+		super('Throttled function aborted');
+		this.name = 'AbortError';
+	}
+}
+
 const pThrottle = (fn, limit, interval) => {
 	if (!Number.isFinite(limit)) {
 		throw new TypeError('Expected `limit` to be a finite number');
@@ -54,7 +61,7 @@ const pThrottle = (fn, limit, interval) => {
 		timeouts.clear();
 
 		for (const x of queue) {
-			x.reject(new pThrottle.AbortError());
+			x.reject(new AbortError());
 		}
 		queue.length = 0;
 	};
@@ -62,11 +69,6 @@ const pThrottle = (fn, limit, interval) => {
 	return throttled;
 };
 
-pThrottle.AbortError = class AbortError extends Error {
-	constructor() {
-		super('Throttled function aborted');
-		this.name = 'AbortError';
-	}
-};
-
 module.exports = pThrottle;
+module.exports.default = pThrottle;
+module.exports.AbortError = AbortError;
