@@ -32,9 +32,7 @@ const pThrottle = (fn, limit, interval) => {
 		x.resolve(fn.apply(x.self, x.args));
 	};
 
-	const throttled = function () {
-		const args = arguments;
-
+	const throttled = function (...args) {
 		return new Promise((resolve, reject) => {
 			queue.push({
 				resolve,

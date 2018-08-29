@@ -1,50 +1,47 @@
 {
-  "name": "p-throttle",
-  "version": "1.1.0",
-  "description": "Throttle promise-returning & async functions",
-  "license": "MIT",
-  "repository": "sindresorhus/p-throttle",
-  "author": {
-    "name": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "sindresorhus.com"
-  },
-  "engines": {
-    "node": ">=4"
-  },
-  "scripts": {
-    "test": "xo && ava"
-  },
-  "files": [
-    "index.js"
-  ],
-  "keywords": [
-    "promise",
-    "throttle",
-    "throat",
-    "limit",
-    "limited",
-    "interval",
-    "rate",
-    "batch",
-    "ratelimit",
-    "queue",
-    "discard",
-    "async",
-    "await",
-    "promises",
-    "time",
-    "out",
-    "cancel",
-    "bluebird"
-  ],
-  "devDependencies": {
-    "ava": "*",
-    "in-range": "^1.0.0",
-    "time-span": "^1.0.0",
-    "xo": "*"
-  },
-  "xo": {
-    "esnext": true
-  }
+	"name": "p-throttle",
+	"version": "1.1.0",
+	"description": "Throttle promise-returning & async functions",
+	"license": "MIT",
+	"repository": "sindresorhus/p-throttle",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=6"
+	},
+	"scripts": {
+		"test": "xo && ava"
+	},
+	"files": [
+		"index.js"
+	],
+	"keywords": [
+		"promise",
+		"throttle",
+		"throat",
+		"limit",
+		"limited",
+		"interval",
+		"rate",
+		"batch",
+		"ratelimit",
+		"queue",
+		"discard",
+		"async",
+		"await",
+		"promises",
+		"time",
+		"out",
+		"cancel",
+		"bluebird"
+	],
+	"devDependencies": {
+		"ava": "*",
+		"in-range": "^1.0.0",
+		"time-span": "^1.0.0",
+		"xo": "*"
+	}
 }
