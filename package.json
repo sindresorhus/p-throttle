@@ -43,12 +43,7 @@
 		"ava": "*",
 		"in-range": "^1.0.0",
 		"time-span": "^1.0.0",
-		"tsd-check": "^0.1.0",
+		"tsd-check": "^0.2.1",
 		"xo": "*"
-	},
-	"xo": {
-		"ignores": [
-			"*.ts"
-		]
 	}
 }
