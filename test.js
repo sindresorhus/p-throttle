@@ -19,7 +19,7 @@ test('main', async t => {
 });
 
 test('passes arguments through', async t => {
-	const throttled = m(async x => x, 1, 100);
+	const throttled = m(async x => x, 1, 100); // eslint-disable-line require-await
 	t.is(await throttled(fixture), fixture);
 });
 
@@ -35,8 +35,8 @@ test('can be aborted', async t => {
 	let error;
 	try {
 		await p;
-	} catch (err) {
-		error = err;
+	} catch (error2) {
+		error = error2;
 	}
 	t.true(error instanceof m.AbortError);
 	t.true(end() < 100);
