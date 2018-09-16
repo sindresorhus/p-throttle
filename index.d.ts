@@ -1,14 +1,9 @@
-interface AbortError extends Error {}
-
-interface AbortErrorConstructor {
+export class AbortError extends Error {
 	/**
 	 * Abort pending execution. All unresolved promised are rejected with a `AbortError` error.
 	 */
-    new(): AbortError;
-    readonly prototype: AbortError;
+	constructor();
 }
-
-export const AbortError: AbortErrorConstructor;
 
 /**
  * Returns a throttled version of `fn`.
