@@ -10,7 +10,7 @@ Useful for rate limiting calls to an external API, for example.
 ## Install
 
 ```
-$ npm install --save p-throttle
+$ npm install p-throttle
 ```
 
 
