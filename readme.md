@@ -39,6 +39,19 @@ for (let i = 1; i <= 6; i++) {
 //=> 6: 2s
 ```
 
+Because we don't specify the number of invocations there will be an extra
+`interval` wait at the end. To avoid this you can specify the number of
+invocations when calling `pThrottle`, like so:
+
+```javascript
+const throttled = pThrottle(index => {
+	const secDiff = ((Date.now() - now) / 1000).toFixed();
+	return Promise.resolve(`${index}: ${secDiff}s`);
+}, 2, 1000, { numberOfInvocations: 6 });
+```
+
+This way, the program will exit without waiting an extra `interval` after the
+`n` final calls, where `n == limit`
 
 ## API
 
