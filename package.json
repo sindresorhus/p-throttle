@@ -13,7 +13,7 @@
 		"node": ">=6"
 	},
 	"scripts": {
-		"test": "xo && ava && tsd-check"
+		"test": "xo --fix && ava && tsd-check"
 	},
 	"files": [
 		"index.js",

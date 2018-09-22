@@ -7,7 +7,7 @@ class AbortError extends Error {
 	}
 }
 
-const pThrottle = (fn, limit, interval) => {
+const pThrottle = (fn, limit, interval, opts) => {
 	if (!Number.isFinite(limit)) {
 		throw new TypeError('Expected `limit` to be a finite number');
 	}
@@ -19,22 +19,28 @@ const pThrottle = (fn, limit, interval) => {
 	const queue = [];
 	const timeouts = new Set();
 	let activeCount = 0;
+	let totalCount = opts &&
+   Number.isFinite(opts.numberOfInvocations) ? opts.numberOfInvocations : -1;
 
 	const next = () => {
 		activeCount++;
 
-		const id = setTimeout(() => {
-			activeCount--;
+		if (totalCount < 0 || totalCount > limit) {
+			// Prevent waiting another 'interval' at the end
+			const id = setTimeout(() => {
+				activeCount--;
 
-			if (queue.length > 0) {
-				next();
-			}
+				if (queue.length > 0) {
+					next();
+				}
 
-			timeouts.delete(id);
-		}, interval);
+				timeouts.delete(id);
+			}, interval);
 
-		timeouts.add(id);
+			timeouts.add(id);
+		}
 
+		totalCount--;
 		const x = queue.shift();
 		x.resolve(fn.apply(x.self, x.args));
 	};
