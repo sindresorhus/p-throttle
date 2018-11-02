@@ -1,8 +1,10 @@
 import test from 'ava';
 import inRange from 'in-range';
 import timeSpan from 'time-span';
+import delay from 'delay';
 import m from '.';
 
+const {Timer} = process.binding('timer_wrap');
 const fixture = Symbol('fixture');
 
 test('main', async t => {
@@ -40,4 +42,24 @@ test('can be aborted', async t => {
 	}
 	t.true(error instanceof m.AbortError);
 	t.true(end() < 100);
+});
+
+test('exits immediately', async t => {
+	const limit = 2;
+	const interval = 1000;
+	const throttled = m(() => Promise.resolve(), limit, interval);
+
+	for (let i = 1; i <= 3; i++) {
+		throttled();
+	}
+
+	await throttled();
+
+	// New tick (because the promise may be finished while the timer *is* pending)
+	await delay(1);
+	const timers = process._getActiveHandles().filter(handle => {
+		// Check if the handle is a Timer that matches the interval
+		return handle instanceof Timer && handle._list.msecs === interval;
+	});
+	t.is(timers.length, 0);
 });

@@ -18,25 +18,55 @@ const pThrottle = (fn, limit, interval) => {
 
 	const queue = [];
 	const timeouts = new Set();
+
+	let intervalEnd = Date.now() + interval;
 	let activeCount = 0;
+	let scheduleTimeoutId = null;
+
+	const schedule = delay => {
+		// There is a schedule pending, don't duplicate
+		if (!scheduleTimeoutId) {
+			const id = setTimeout(() => {
+				// It's very important to delete the timeout *before* calling `tryToAdd()`,
+				// because otherwise it wouldn't be able to schedule again
+				// in case the limit was reached.
+				timeouts.delete(id);
+				scheduleTimeoutId = null;
+
+				tryToAdd();
+			}, delay);
+
+			timeouts.add(id);
+			scheduleTimeoutId = id;
+		}
+	};
 
 	const next = () => {
 		activeCount++;
 
-		const id = setTimeout(() => {
-			activeCount--;
-
-			if (queue.length > 0) {
-				next();
-			}
-
-			timeouts.delete(id);
-		}, interval);
-
-		timeouts.add(id);
-
 		const x = queue.shift();
 		x.resolve(fn.apply(x.self, x.args));
+	};
+
+	const tryToAdd = () => {
+		// Check if a new interval has begun
+		const now = Date.now();
+		if (now > intervalEnd) {
+			activeCount = 0;
+			intervalEnd = now + interval;
+		}
+
+		// For all items in the queue
+		while (queue.length) {
+			if (activeCount < limit) {
+				// Execute them if the active count is less than the limit
+				next();
+			} else {
+				// Try to make a new schedule
+				schedule(intervalEnd - now);
+				break;
+			}
+		}
 	};
 
 	const throttled = function (...args) {
@@ -48,9 +78,7 @@ const pThrottle = (fn, limit, interval) => {
 				self: this
 			});
 
-			if (activeCount < limit) {
-				next();
-			}
+			tryToAdd();
 		});
 	};
 
