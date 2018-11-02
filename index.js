@@ -17,79 +17,34 @@ const pThrottle = (fn, limit, interval) => {
 	}
 
 	const queue = [];
-	const timeouts = new Set();
 
-	let intervalEnd = Date.now() + interval;
+	let currentTick = Date.now();
 	let activeCount = 0;
-	let scheduleTimeoutId = null;
-
-	const schedule = delay => {
-		// There is a schedule pending, don't duplicate
-		if (!scheduleTimeoutId) {
-			const id = setTimeout(() => {
-				// It's very important to delete the timeout *before* calling `tryToAdd()`,
-				// because otherwise it wouldn't be able to schedule again
-				// in case the limit was reached.
-				timeouts.delete(id);
-				scheduleTimeoutId = null;
-
-				tryToAdd();
-			}, delay);
-
-			timeouts.add(id);
-			scheduleTimeoutId = id;
-		}
-	};
-
-	const next = () => {
-		activeCount++;
-
-		const x = queue.shift();
-		x.resolve(fn.apply(x.self, x.args));
-	};
-
-	const tryToAdd = () => {
-		// Check if a new interval has begun
-		const now = Date.now();
-		if (now > intervalEnd) {
-			activeCount = 0;
-			intervalEnd = now + interval;
-		}
-
-		// For all items in the queue
-		while (queue.length) {
-			if (activeCount < limit) {
-				// Execute them if the active count is less than the limit
-				next();
-			} else {
-				// Try to make a new schedule
-				schedule(intervalEnd - now);
-				break;
-			}
-		}
-	};
 
 	const throttled = function (...args) {
 		return new Promise((resolve, reject) => {
-			queue.push({
-				resolve,
-				reject,
-				args,
-				self: this
-			});
+			const execute = () => resolve(fn.apply(this, args));
 
-			tryToAdd();
+			if (activeCount < limit) {
+				activeCount++;
+			} else {
+				currentTick += interval;
+				activeCount = 1;
+			}
+
+			queue.push({
+				timeout: setTimeout(execute, currentTick - Date.now()),
+				reject
+			});
 		});
 	};
 
 	throttled.abort = () => {
-		for (const id of timeouts) {
-			clearTimeout(id);
-		}
-		timeouts.clear();
+		const error = new AbortError();
 
-		for (const x of queue) {
-			x.reject(new AbortError());
+		for (const item of queue) {
+			clearTimeout(item.timeout);
+			item.reject(error);
 		}
 		queue.length = 0;
 	};
