@@ -16,37 +16,43 @@ const pThrottle = (fn, limit, interval) => {
 		throw new TypeError('Expected `interval` to be a finite number');
 	}
 
-	const queue = [];
+	const queue = new Map();
 
-	let currentTick = Date.now();
+	let currentTick = 0;
 	let activeCount = 0;
 
 	const throttled = function (...args) {
+		let timeout;
 		return new Promise((resolve, reject) => {
-			const execute = () => resolve(fn.apply(this, args));
+			const execute = () => {
+				resolve(fn.apply(this, args));
+				queue.delete(timeout);
+			};
 
-			if (activeCount < limit) {
+			const now = Date.now();
+
+			if ((now - currentTick) > interval) {
+				activeCount = 1;
+				currentTick = now;
+			} else if (activeCount < limit) {
 				activeCount++;
 			} else {
 				currentTick += interval;
 				activeCount = 1;
 			}
 
-			queue.push({
-				timeout: setTimeout(execute, currentTick - Date.now()),
-				reject
-			});
+			timeout = setTimeout(execute, currentTick - now);
+
+			queue.set(timeout, reject);
 		});
 	};
 
 	throttled.abort = () => {
-		const error = new AbortError();
-
-		for (const item of queue) {
-			clearTimeout(item.timeout);
-			item.reject(error);
+		for (const timeout of queue.keys()) {
+			queue.get(timeout)(new AbortError());
 		}
-		queue.length = 0;
+
+		queue.clear();
 	};
 
 	return throttled;
