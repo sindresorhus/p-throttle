@@ -19,7 +19,7 @@ test('main', async t => {
 });
 
 test('passes arguments through', async t => {
-	const throttled = m(async x => x, 1, 100); // eslint-disable-line require-await
+	const throttled = m(async x => x, 1, 100);
 	t.is(await throttled(fixture), fixture);
 });
 
