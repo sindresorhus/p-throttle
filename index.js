@@ -16,54 +16,43 @@ const pThrottle = (fn, limit, interval) => {
 		throw new TypeError('Expected `interval` to be a finite number');
 	}
 
-	const queue = [];
-	const timeouts = new Set();
+	const queue = new Map();
+
+	let currentTick = 0;
 	let activeCount = 0;
 
-	const next = () => {
-		activeCount++;
-
-		const id = setTimeout(() => {
-			activeCount--;
-
-			if (queue.length > 0) {
-				next();
-			}
-
-			timeouts.delete(id);
-		}, interval);
-
-		timeouts.add(id);
-
-		const x = queue.shift();
-		x.resolve(fn.apply(x.self, x.args));
-	};
-
 	const throttled = function (...args) {
+		let timeout;
 		return new Promise((resolve, reject) => {
-			queue.push({
-				resolve,
-				reject,
-				args,
-				self: this
-			});
+			const execute = () => {
+				resolve(fn.apply(this, args));
+				queue.delete(timeout);
+			};
 
-			if (activeCount < limit) {
-				next();
+			const now = Date.now();
+
+			if ((now - currentTick) > interval) {
+				activeCount = 1;
+				currentTick = now;
+			} else if (activeCount < limit) {
+				activeCount++;
+			} else {
+				currentTick += interval;
+				activeCount = 1;
 			}
+
+			timeout = setTimeout(execute, currentTick - now);
+
+			queue.set(timeout, reject);
 		});
 	};
 
 	throttled.abort = () => {
-		for (const id of timeouts) {
-			clearTimeout(id);
+		for (const timeout of queue.keys()) {
+			queue.get(timeout)(new AbortError());
 		}
-		timeouts.clear();
 
-		for (const x of queue) {
-			x.reject(new AbortError());
-		}
-		queue.length = 0;
+		queue.clear();
 	};
 
 	return throttled;
