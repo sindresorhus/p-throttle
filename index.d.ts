@@ -8,9 +8,9 @@ export class AbortError extends Error {
 }
 
 /**
- * Returns a throttled version of `fn`.
+ * [Throttle](https://css-tricks.com/debouncing-throttling-explained-examples/) promise-returning/async/normal functions.
  *
- * @param input - Promise-returning/async function or a normal function.
+ * @param fn - Promise-returning/async function or a normal function.
  * @param limit - Maximum number of calls within an `interval`.
  * @param interval - Timespan for `limit` in milliseconds.
  * @returns A throttled version of `fn`.
@@ -28,7 +28,7 @@ export class AbortError extends Error {
  * }
  */
 export default function<TArguments extends any[], TReturn>(
-	input: (...arguments: TArguments) => PromiseLike<TReturn> | TReturn,
+	fn: (...arguments: TArguments) => PromiseLike<TReturn> | TReturn,
 	limit: number,
 	interval: number
 ): ThrottledFunction<TArguments, TReturn>;
@@ -36,5 +36,8 @@ export default function<TArguments extends any[], TReturn>(
 export type ThrottledFunction<TArguments extends any[], TReturn> = ((
 	...args: TArguments
 ) => Promise<TReturn>) & {
+	/**
+	 * Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
+	 */
 	abort(): void;
 };
