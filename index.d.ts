@@ -1,4 +1,6 @@
 export class AbortError extends Error {
+	readonly name: 'AbortError';
+
 	/**
 	 * Abort pending execution. All unresolved promised are rejected with a `AbortError` error.
 	 */
@@ -25,4 +27,14 @@ export class AbortError extends Error {
  * 	throttled(i).then(console.log);
  * }
  */
-export default function <T extends Function>(input: T, limit: number, interval: number): T;
+export default function<TArguments extends any[], TReturn>(
+	input: (...arguments: TArguments) => PromiseLike<TReturn> | TReturn,
+	limit: number,
+	interval: number
+): ThrottledFunction<TArguments, TReturn>;
+
+export type ThrottledFunction<TArguments extends any[], TReturn> = ((
+	...args: TArguments
+) => Promise<TReturn>) & {
+	abort(): void;
+};
