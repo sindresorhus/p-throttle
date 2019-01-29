@@ -49,6 +49,7 @@ const pThrottle = (fn, limit, interval) => {
 
 	throttled.abort = () => {
 		for (const timeout of queue.keys()) {
+			clearTimeout(timeout);
 			queue.get(timeout)(new AbortError());
 		}
 
