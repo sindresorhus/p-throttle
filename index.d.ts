@@ -7,6 +7,15 @@ export class AbortError extends Error {
 	constructor();
 }
 
+export type ThrottledFunction<Arguments extends unknown[], Return> = ((
+	...arguments: Arguments
+) => Promise<Return>) & {
+	/**
+	 * Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
+	 */
+	abort(): void;
+};
+
 /**
  * [Throttle](https://css-tricks.com/debouncing-throttling-explained-examples/) promise-returning/async/normal functions.
  *
@@ -27,17 +36,8 @@ export class AbortError extends Error {
  * 	throttled(i).then(console.log);
  * }
  */
-export default function<TArguments extends any[], TReturn>(
-	fn: (...arguments: TArguments) => PromiseLike<TReturn> | TReturn,
+export default function<Arguments extends unknown[], Return>(
+	fn: (...arguments: Arguments) => PromiseLike<Return> | Return,
 	limit: number,
 	interval: number
-): ThrottledFunction<TArguments, TReturn>;
-
-export type ThrottledFunction<TArguments extends any[], TReturn> = ((
-	...args: TArguments
-) => Promise<TReturn>) & {
-	/**
-	 * Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
-	 */
-	abort(): void;
-};
+): ThrottledFunction<Arguments, Return>;

@@ -2,17 +2,13 @@ import {expectType} from 'tsd-check';
 import pThrottle, {AbortError, ThrottledFunction} from '.';
 
 const throttledUnicorn = pThrottle(
-	(index: string) => {
-		return '🦄';
-	},
+	(index: string) => '🦄',
 	1,
 	1000
 );
 
 const throttledLazyUnicorn = pThrottle(
-	async (index: string) => {
-		return '🦄';
-	},
+	async (index: string) => '🦄',
 	1,
 	1000
 );
