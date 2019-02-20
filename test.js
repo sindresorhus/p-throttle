@@ -1,3 +1,4 @@
+/* eslint-disable node/no-deprecated-api */
 import test from 'ava';
 import inRange from 'in-range';
 import timeSpan from 'time-span';
@@ -40,6 +41,7 @@ test('can be aborted', async t => {
 	} catch (error2) {
 		error = error2;
 	}
+
 	t.true(error instanceof pThrottle.AbortError);
 	t.true(end() < 100);
 });

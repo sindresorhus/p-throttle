@@ -40,11 +40,11 @@
 		"bluebird"
 	],
 	"devDependencies": {
-		"ava": "^0.25.0",
+		"ava": "^1.2.1",
 		"delay": "^4.1.0",
 		"in-range": "^1.0.0",
 		"time-span": "^2.0.0",
-		"tsd-check": "^0.2.1",
-		"xo": "^0.23.0"
+		"tsd-check": "^0.3.0",
+		"xo": "^0.24.0"
 	}
 }
