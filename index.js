@@ -60,5 +60,6 @@ const pThrottle = (fn, limit, interval) => {
 };
 
 module.exports = pThrottle;
+// TODO: Remove this for the next major release
 module.exports.default = pThrottle;
 module.exports.AbortError = AbortError;
