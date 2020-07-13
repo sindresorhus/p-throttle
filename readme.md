@@ -16,7 +16,7 @@ $ npm install p-throttle
 
 ## Usage
 
-Here, the trottled function is only called twice a second:
+Here, the throttled function is only called twice a second:
 
 ```js
 const pThrottle = require('p-throttle');
