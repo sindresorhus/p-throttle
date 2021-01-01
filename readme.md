@@ -1,4 +1,4 @@
-# p-throttle [![Build Status](https://travis-ci.org/sindresorhus/p-throttle.svg?branch=master)](https://travis-ci.org/sindresorhus/p-throttle)
+# p-throttle
 
 > [Throttle](https://css-tricks.com/debouncing-throttling-explained-examples/) promise-returning & async functions
 
