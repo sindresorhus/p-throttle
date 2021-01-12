@@ -8,50 +8,64 @@ declare class AbortErrorClass extends Error {
 }
 
 declare namespace pThrottle {
-	type ThrottledFunction<Arguments extends unknown[], Return> = ((
-		...arguments: Arguments
-	) => Promise<Return>) & {
+	type ThrottledFunction<FunctionType extends (...args: any) => any> = ((
+		...arguments: Parameters<FunctionType>
+	) => ReturnType<FunctionType>) & {
 		/**
 		Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
 		*/
 		abort(): void;
 	};
 
+	interface Options {
+		/**
+		Maximum number of calls within an `interval`.
+		*/
+		limit: number
+
+		/**
+		Timespan for `limit` in milliseconds.
+		*/
+		interval: number
+	}
+
 	type AbortError = AbortErrorClass;
+
+	/**
+	@param fn - Promise-returning/async function or a normal function.
+	*/
+	type Throttle<FunctionType extends (...args: any) => any> = (fn: (...arguments: Parameters<FunctionType>) => ReturnType<FunctionType>) => pThrottle.ThrottledFunction<FunctionType>;
 }
 
 declare const pThrottle: {
 	/**
 	[Throttle](https://css-tricks.com/debouncing-throttling-explained-examples/) promise-returning/async/normal functions.
 
-	@param fn - Promise-returning/async function or a normal function.
-	@param limit - Maximum number of calls within an `interval`.
-	@param interval - Timespan for `limit` in milliseconds.
 	@returns A throttled version of `fn`.
 
 	@example
 	```
 	import pThrottle from 'p-throttle';
 
-	const throttled = pThrottle(async index => {
+	const throttle = pThrottle({
+		limit: 2,
+		interval: 1000
+	});
+
+	const throttled = throttle(async index => {
 		return index * 2;
-	}, 2, 1000);
+	});
 
 	for (let i = 1; i <= 6; i++) {
 		throttled(i).then(console.log);
 	}
 	```
 	*/
-	<Arguments extends unknown[], Return>(
-		fn: (...arguments: Arguments) => PromiseLike<Return> | Return,
-		limit: number,
-		interval: number
-	): pThrottle.ThrottledFunction<Arguments, Return>;
+	<FunctionType extends (...args: any) => any>(
+		options: pThrottle.Options
+	): pThrottle.Throttle<FunctionType>
 
 	AbortError: typeof AbortErrorClass;
-
-	// TODO: Remove this for the next major release
-	default: typeof pThrottle;
 };
 
 export = pThrottle;
