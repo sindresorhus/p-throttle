@@ -63,7 +63,7 @@ declare const pThrottle: {
 	*/
 	<FunctionType extends (...args: any) => any>(
 		options: pThrottle.Options
-	): pThrottle.Throttle<FunctionType>
+	): pThrottle.Throttle<FunctionType>;
 
 	AbortError: typeof AbortErrorClass;
 };
