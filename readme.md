@@ -54,6 +54,8 @@ Returns a throttled version of `fn`.
 
 Type: `object`
 
+Both the `limit` and `interval` options must be specified.
+
 ##### limit
 
 Type: `number`
