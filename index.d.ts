@@ -43,6 +43,8 @@ declare const pThrottle: {
 
 	@returns A throttled version of `fn`.
 
+	Both the `limit` and `interval` options must be specified.
+
 	@example
 	```
 	import pThrottle from 'p-throttle';
