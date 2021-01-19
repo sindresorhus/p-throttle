@@ -15,7 +15,7 @@ test('main', async t => {
 	await Promise.all(new Array(totalRuns).fill(0).map(throttled));
 
 	const totalTime = (totalRuns * interval) / limit;
-	t.true(inRange(end(), totalTime - 100, totalTime + 100));
+	t.true(inRange(end(), totalTime - 200, totalTime + 200));
 });
 
 test('passes arguments through', async t => {
