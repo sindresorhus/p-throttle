@@ -1,7 +1,7 @@
 import test from 'ava';
 import inRange from 'in-range';
 import timeSpan from 'time-span';
-import pThrottle from '.';
+import pThrottle from './index.js';
 
 const fixture = Symbol('fixture');
 
@@ -12,10 +12,13 @@ test('main', async t => {
 	const end = timeSpan();
 	const throttled = pThrottle({limit, interval})(async () => {});
 
-	await Promise.all(new Array(totalRuns).fill(0).map(throttled));
+	await Promise.all(new Array(totalRuns).fill(0).map(x => throttled(x)));
 
 	const totalTime = (totalRuns * interval) / limit;
-	t.true(inRange(end(), totalTime - 200, totalTime + 200));
+	t.true(inRange(end(), {
+		start: totalTime - 200,
+		end: totalTime + 200
+	}));
 });
 
 test('passes arguments through', async t => {
@@ -35,8 +38,8 @@ test('can be aborted', async t => {
 	let error;
 	try {
 		await promise;
-	} catch (error2) {
-		error = error2;
+	} catch (error_) {
+		error = error_;
 	}
 
 	t.true(error instanceof pThrottle.AbortError);

@@ -1,6 +1,6 @@
-import {expectType} from 'tsd';
-import pThrottle = require('.');
-import {AbortError, ThrottledFunction} from '.';
+import {expectType, expectAssignable} from 'tsd';
+import pThrottle = require('./index.js');
+import {AbortError, ThrottledFunction} from './index.js';
 
 const throttledUnicorn = pThrottle({
 	limit: 1,
@@ -14,8 +14,8 @@ const throttledLazyUnicorn = pThrottle({
 
 expectType<AbortError>(new AbortError());
 
-expectType<ThrottledFunction<(index: string) => string>>(throttledUnicorn);
-expectType<ThrottledFunction<(index: string) => string>>(throttledLazyUnicorn);
+expectAssignable<ThrottledFunction<(index: string) => string>>(throttledUnicorn);
+expectAssignable<ThrottledFunction<(index: string) => string>>(throttledLazyUnicorn);
 
 throttledUnicorn.abort();
 throttledLazyUnicorn.abort();

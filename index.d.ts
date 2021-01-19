@@ -21,12 +21,12 @@ declare namespace pThrottle {
 		/**
 		Maximum number of calls within an `interval`.
 		*/
-		limit: number
+		limit: number;
 
 		/**
 		Timespan for `limit` in milliseconds.
 		*/
-		interval: number
+		interval: number;
 	}
 
 	type AbortError = AbortErrorClass;
@@ -34,10 +34,12 @@ declare namespace pThrottle {
 	/**
 	@param fn - Promise-returning/async function or a normal function.
 	*/
-	type Throttle<FunctionType extends (...args: any) => any> = (fn: (...arguments: Parameters<FunctionType>) => ReturnType<FunctionType>) => pThrottle.ThrottledFunction<FunctionType>;
+	type Throttle<FunctionType extends (...args: any) => any> = (fn: (...arguments: Parameters<FunctionType>) => ReturnType<FunctionType>) => ThrottledFunction<FunctionType>;
 }
 
 declare const pThrottle: {
+	AbortError: typeof AbortErrorClass;
+
 	/**
 	[Throttle](https://css-tricks.com/debouncing-throttling-explained-examples/) promise-returning/async/normal functions.
 
@@ -66,8 +68,6 @@ declare const pThrottle: {
 	<FunctionType extends (...args: any) => any>(
 		options: pThrottle.Options
 	): pThrottle.Throttle<FunctionType>;
-
-	AbortError: typeof AbortErrorClass;
 };
 
 export = pThrottle;

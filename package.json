@@ -4,10 +4,11 @@
 	"description": "Throttle promise-returning & async functions",
 	"license": "MIT",
 	"repository": "sindresorhus/p-throttle",
+	"funding": "https://github.com/sponsors/sindresorhus",
 	"author": {
 		"name": "Sindre Sorhus",
 		"email": "sindresorhus@gmail.com",
-		"url": "sindresorhus.com"
+		"url": "https://sindresorhus.com"
 	},
 	"engines": {
 		"node": ">=10"
@@ -40,11 +41,11 @@
 		"bluebird"
 	],
 	"devDependencies": {
-		"ava": "^1.4.1",
-		"delay": "^4.1.0",
-		"in-range": "^1.0.0",
-		"time-span": "^2.0.0",
-		"tsd": "^0.7.2",
-		"xo": "^0.24.0"
+		"ava": "^2.4.0",
+		"delay": "^4.4.0",
+		"in-range": "^2.0.0",
+		"time-span": "^4.0.0",
+		"tsd": "^0.14.0",
+		"xo": "^0.37.1"
 	}
 }
