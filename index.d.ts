@@ -7,10 +7,12 @@ declare class AbortErrorClass extends Error {
 	constructor();
 }
 
+type PromiseResolve<ValueType> = ValueType extends PromiseLike<infer ValueType> ? Promise<ValueType> : Promise<ValueType>;
+
 declare namespace pThrottle {
 	type ThrottledFunction<Argument, ReturnValue> = ((
 		...arguments: Argument[]
-	) => Promise<ReturnValue>) & {
+	) => PromiseResolve<ReturnValue>) & {
 		/**
 		Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
 		*/
