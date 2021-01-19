@@ -8,9 +8,9 @@ declare class AbortErrorClass extends Error {
 }
 
 declare namespace pThrottle {
-	type ThrottledFunction<FunctionType extends (...args: any) => any> = ((
-		...arguments: Parameters<FunctionType>
-	) => ReturnType<FunctionType>) & {
+	type ThrottledFunction<Argument, ReturnValue> = ((
+		...arguments: Argument[]
+	) => Promise<ReturnValue>) & {
 		/**
 		Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
 		*/
@@ -30,11 +30,6 @@ declare namespace pThrottle {
 	}
 
 	type AbortError = AbortErrorClass;
-
-	/**
-	@param fn - Promise-returning/async function or a normal function.
-	*/
-	type Throttle<FunctionType extends (...args: any) => any> = (fn: (...arguments: Parameters<FunctionType>) => ReturnType<FunctionType>) => ThrottledFunction<FunctionType>;
 }
 
 declare const pThrottle: {
@@ -65,9 +60,9 @@ declare const pThrottle: {
 	}
 	```
 	*/
-	<FunctionType extends (...args: any) => any>(
+	(
 		options: pThrottle.Options
-	): pThrottle.Throttle<FunctionType>;
+	): <Argument, ReturnValue>(function_: (...arguments: Argument[]) => ReturnValue) => pThrottle.ThrottledFunction<Argument, ReturnValue>;
 };
 
 export = pThrottle;
