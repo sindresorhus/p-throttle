@@ -12,16 +12,16 @@ declare namespace pThrottle {
 		...arguments: Parameters<FunctionType>
 	) => ReturnType<FunctionType>) & {
 		/**
-		Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
-		*/
-		abort(): void;
-
-		/**
 		Whether future function calls should be throttled or count towards throttling thresholds.
 
 		@default true
 		*/
 		isEnabled: boolean;
+
+		/**
+		Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
+		*/
+		abort(): void;
 	};
 
 	interface Options {

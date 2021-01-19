@@ -56,10 +56,10 @@ test('can be disabled', async t => {
 
 	t.is(await throttled(), 1);
 
-	const end = timeSpan()
+	const end = timeSpan();
 
-	throttled.isEnabled = false
-	t.is(await throttled(), 2)
+	throttled.isEnabled = false;
+	t.is(await throttled(), 2);
 
-	t.true(end() < 200)
+	t.true(end() < 200);
 });
