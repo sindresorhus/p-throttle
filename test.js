@@ -45,3 +45,21 @@ test('can be aborted', async t => {
 	t.true(error instanceof pThrottle.AbortError);
 	t.true(end() < 100);
 });
+
+test('can be disabled', async t => {
+	let counter = 0;
+
+	const throttled = pThrottle({
+		limit: 1,
+		interval: 10000
+	})(async () => ++counter);
+
+	t.is(await throttled(), 1);
+
+	const end = timeSpan()
+
+	throttled.isEnabled = false
+	t.is(await throttled(), 2)
+
+	t.true(end() < 200)
+});

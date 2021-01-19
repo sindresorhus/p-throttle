@@ -19,3 +19,5 @@ expectAssignable<ThrottledFunction<(index: string) => string>>(throttledLazyUnic
 
 throttledUnicorn.abort();
 throttledLazyUnicorn.abort();
+
+expectType<boolean>(throttledUnicorn.isEnabled);

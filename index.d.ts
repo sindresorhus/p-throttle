@@ -15,6 +15,13 @@ declare namespace pThrottle {
 		Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
 		*/
 		abort(): void;
+
+		/**
+		Whether future function calls should be throttled or count towards throttling thresholds.
+
+		@default true
+		*/
+		isEnabled: boolean;
 	};
 
 	interface Options {

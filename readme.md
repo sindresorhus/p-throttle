@@ -80,6 +80,13 @@ Promise-returning/async function or a normal function.
 
 Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
 
+### throttledFn.isEnabled
+
+Type: `boolean`\
+Default: `true`
+
+Whether future function calls should be throttled and count towards throttling thresholds.
+
 ## Related
 
 - [p-debounce](https://github.com/sindresorhus/p-debounce) - Debounce promise-returning & async functions
