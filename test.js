@@ -45,3 +45,30 @@ test('can be aborted', async t => {
 	t.true(error instanceof pThrottle.AbortError);
 	t.true(end() < 100);
 });
+
+test('`this` is preserved in pThrottle fn', async t => {
+	class FixtureClass {
+		constructor() {
+			this._foo = fixture;
+		}
+
+		foo() {
+			// If `this` is not preserved by pThrottle()
+			// then `this` will be undefined and accesing `this._foo` will throw.
+			return this._foo;
+		}
+
+		getThis() {
+			// If `this` is not preserved by pThrottle()
+			// then `this` will be undefined
+			return this;
+		}
+	}
+	FixtureClass.prototype.foo = pThrottle({limit: 1, interval: 100})(FixtureClass.prototype.foo);
+	FixtureClass.prototype.getThis = pThrottle({limit: 1, interval: 100})(FixtureClass.prototype.getThis);
+
+	const thisFixture = new FixtureClass();
+
+	t.is(await thisFixture.getThis(), thisFixture);
+	await t.notThrowsAsync(() => thisFixture.foo());
+});
