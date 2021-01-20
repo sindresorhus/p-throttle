@@ -23,33 +23,33 @@ const pThrottle = ({limit, interval}) => {
 
 	return function_ => {
 		const throttled = function (...args) {
-			if (throttled.isEnabled) {
-				let timeout;
-				return new Promise((resolve, reject) => {
-					const execute = () => {
-						resolve(function_.apply(this, args));
-						queue.delete(timeout);
-					};
-
-					const now = Date.now();
-
-					if ((now - currentTick) > interval) {
-						activeCount = 1;
-						currentTick = now;
-					} else if (activeCount < limit) {
-						activeCount++;
-					} else {
-						currentTick += interval;
-						activeCount = 1;
-					}
-
-					timeout = setTimeout(execute, currentTick - now);
-
-					queue.set(timeout, reject);
-				});
+			if (!throttled.isEnabled) {
+				return Promise.resolve(function_.apply(this, args));
 			}
+			
+			let timeout;
+			return new Promise((resolve, reject) => {
+				const execute = () => {
+					resolve(function_.apply(this, args));
+					queue.delete(timeout);
+				};
 
-			return Promise.resolve(function_.apply(this, args));
+				const now = Date.now();
+
+				if ((now - currentTick) > interval) {
+					activeCount = 1;
+					currentTick = now;
+				} else if (activeCount < limit) {
+					activeCount++;
+				} else {
+					currentTick += interval;
+					activeCount = 1;
+				}
+
+				timeout = setTimeout(execute, currentTick - now);
+
+				queue.set(timeout, reject);
+			});
 		};
 
 		throttled.abort = () => {
