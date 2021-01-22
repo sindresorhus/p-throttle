@@ -29,6 +29,11 @@ declare namespace pThrottle {
 		Timespan for `limit` in milliseconds.
 		*/
 		interval: number;
+
+		/**
+		Use a strict, more resource intensive, throttling algorithm
+		*/
+		strict?: boolean;
 	}
 
 	type AbortError = AbortErrorClass;
