@@ -17,32 +17,24 @@ const pThrottle = ({limit, interval}) => {
 	}
 
 	const queue = new Map();
-
-	let currentTick = 0;
-	let activeCount = 0;
+	const ticks = [];
 
 	return function_ => {
 		const throttled = function (...args) {
 			let timeout;
 			return new Promise((resolve, reject) => {
 				const execute = () => {
+					ticks.pop();
 					resolve(function_.apply(this, args));
 					queue.delete(timeout);
 				};
 
 				const now = Date.now();
+				const executeAt = ticks.length < limit ? now : ticks[limit - 1] + interval;
 
-				if ((now - currentTick) > interval) {
-					activeCount = 1;
-					currentTick = now;
-				} else if (activeCount < limit) {
-					activeCount++;
-				} else {
-					currentTick += interval;
-					activeCount = 1;
-				}
+				ticks.unshift(executeAt);
 
-				timeout = setTimeout(execute, currentTick - now);
+				timeout = setTimeout(execute, executeAt - now);
 
 				queue.set(timeout, reject);
 			});
@@ -55,6 +47,7 @@ const pThrottle = ({limit, interval}) => {
 			}
 
 			queue.clear();
+			ticks.splice(0, ticks.length);
 		};
 
 		return throttled;
