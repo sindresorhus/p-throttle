@@ -70,5 +70,6 @@ test('`this` is preserved in throttled function', async t => {
 	const thisFixture = new FixtureClass();
 
 	t.is(await thisFixture.getThis(), thisFixture);
-	await t.notThrowsAsync(() => thisFixture.foo());
+	await t.notThrowsAsync(thisFixture.foo());
+	t.is(await thisFixture.foo(), fixture);
 });
