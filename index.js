@@ -24,7 +24,7 @@ const pThrottle = ({limit, interval}) => {
 	return function_ => {
 		const throttled = function (...args) {
 			if (!throttled.isEnabled) {
-				return Promise.resolve(function_.apply(this, args));
+				return (async () => function_.apply(this, args))();
 			}
 
 			let timeout;
