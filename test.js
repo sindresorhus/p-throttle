@@ -5,6 +5,7 @@ import delay from 'delay';
 import pThrottle from './index.js';
 
 const fixture = Symbol('fixture');
+
 test('main', async t => {
 	const totalRuns = 100;
 	const limit = 5;
