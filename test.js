@@ -64,6 +64,18 @@ test('can be disabled', async t => {
 	t.true(end() < 200);
 });
 
+test('promise rejections are thrown', async t => {
+	const throttled = pThrottle({
+		limit: 1,
+		interval: 10000
+	})(() => Promise.reject(new Error("Catch me if you can!")));
+
+	await t.throwsAsync(throttled, {
+		instanceOf: Error,
+		message: "Catch me if you can!"
+	})
+})
+
 test('`this` is preserved in throttled function', async t => {
 	class FixtureClass {
 		constructor() {
