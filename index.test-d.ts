@@ -19,3 +19,5 @@ expectType<ThrottledFunction<string, Promise<string>>>(throttledLazyUnicorn);
 
 throttledUnicorn.abort();
 throttledLazyUnicorn.abort();
+
+expectType<boolean>(throttledUnicorn.isEnabled);

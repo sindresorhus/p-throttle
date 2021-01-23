@@ -23,6 +23,10 @@ const pThrottle = ({limit, interval}) => {
 
 	return function_ => {
 		const throttled = function (...args) {
+			if (!throttled.isEnabled) {
+				return (async () => function_.apply(this, args))();
+			}
+
 			let timeout;
 			return new Promise((resolve, reject) => {
 				const execute = () => {
@@ -56,6 +60,8 @@ const pThrottle = ({limit, interval}) => {
 
 			queue.clear();
 		};
+
+		throttled.isEnabled = true;
 
 		return throttled;
 	};

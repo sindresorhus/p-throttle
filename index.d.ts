@@ -14,6 +14,13 @@ declare namespace pThrottle {
 		...arguments: Argument[]
 	) => PromiseResolve<ReturnValue>) & {
 		/**
+		Whether future function calls should be throttled or count towards throttling thresholds.
+
+		@default true
+		*/
+		isEnabled: boolean;
+
+		/**
 		Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
 		*/
 		abort(): void;
