@@ -31,7 +31,6 @@ expectType<ThrottledFunction<string, Promise<string>>>(throttledLazyUnicorn);
 expectType<ThrottledFunction<string, string>>(strictThrottledUnicorn);
 expectType<ThrottledFunction<string, Promise<string>>>(strictThrottledLazyUnicorn);
 
-
 throttledUnicorn.abort();
 throttledLazyUnicorn.abort();
 strictThrottledUnicorn.abort();
