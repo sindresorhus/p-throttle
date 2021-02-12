@@ -124,3 +124,61 @@ test('can be aborted', async t => {
 	t.true(error instanceof pThrottle.AbortError);
 	t.true(end() < 100);
 });
+
+test('can be disabled', async t => {
+	let counter = 0;
+
+	const throttled = pThrottle({
+		limit: 1,
+		interval: 10000
+	})(async () => ++counter);
+
+	t.is(await throttled(), 1);
+
+	const end = timeSpan();
+
+	throttled.isEnabled = false;
+	t.is(await throttled(), 2);
+
+	t.true(end() < 200);
+});
+
+test('promise rejections are thrown', async t => {
+	const throttled = pThrottle({
+		limit: 1,
+		interval: 10000
+	})(() => Promise.reject(new Error('Catch me if you can!')));
+
+	await t.throwsAsync(throttled, {
+		instanceOf: Error,
+		message: 'Catch me if you can!'
+	});
+});
+
+test('`this` is preserved in throttled function', async t => {
+	class FixtureClass {
+		constructor() {
+			this._foo = fixture;
+		}
+
+		foo() {
+			// If `this` is not preserved by `pThrottle()`
+			// then `this` will be undefined and accesing `this._foo` will throw.
+			return this._foo;
+		}
+
+		getThis() {
+			// If `this` is not preserved by `pThrottle()`
+			// then `this` will be undefined.
+			return this;
+		}
+	}
+	FixtureClass.prototype.foo = pThrottle({limit: 1, interval: 100})(FixtureClass.prototype.foo);
+	FixtureClass.prototype.getThis = pThrottle({limit: 1, interval: 100})(FixtureClass.prototype.getThis);
+
+	const thisFixture = new FixtureClass();
+
+	t.is(await thisFixture.getThis(), thisFixture);
+	await t.notThrowsAsync(thisFixture.foo());
+	t.is(await thisFixture.foo(), fixture);
+});

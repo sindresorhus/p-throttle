@@ -36,3 +36,5 @@ throttledUnicorn.abort();
 throttledLazyUnicorn.abort();
 strictThrottledUnicorn.abort();
 strictThrottledLazyUnicorn.abort();
+
+expectType<boolean>(throttledUnicorn.isEnabled);

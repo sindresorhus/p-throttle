@@ -65,6 +65,10 @@ const pThrottle = ({limit, interval, strict}) => {
 
 	return function_ => {
 		const throttled = function (...args) {
+			if (!throttled.isEnabled) {
+				return (async () => function_.apply(this, args))();
+			}
+
 			let timeout;
 			return new Promise((resolve, reject) => {
 				const execute = () => {
@@ -87,6 +91,8 @@ const pThrottle = ({limit, interval, strict}) => {
 			queue.clear();
 			strictTicks.splice(0, strictTicks.length);
 		};
+
+		throttled.isEnabled = true;
 
 		return throttled;
 	};
