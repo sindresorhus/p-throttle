@@ -30,17 +30,19 @@ declare namespace pThrottle {
 		/**
 		Maximum number of calls within an `interval`.
 		*/
-		limit: number;
+		readonly limit: number;
 
 		/**
 		Timespan for `limit` in milliseconds.
 		*/
-		interval: number;
+		readonly interval: number;
 
 		/**
-		Use a strict, more resource intensive, throttling algorithm
+		Use a strict, more resource intensive, throttling algorithm. The default algorithm uses a windowed approach that will work correctly in most cases, limiting the total number of calls at the specified limit per interval window. The strict algorithm throttles each call individually, ensuring the limit is not exceeded for any interval.
+		
+		@default false
 		*/
-		strict?: boolean;
+		readonly strict?: boolean;
 	}
 
 	type AbortError = AbortErrorClass;
