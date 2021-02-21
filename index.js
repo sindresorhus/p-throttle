@@ -7,7 +7,7 @@ class AbortError extends Error {
 	}
 }
 
-const pThrottle = ({limit, interval}) => {
+const pThrottle = ({limit, interval, strict}) => {
 	if (!Number.isFinite(limit)) {
 		throw new TypeError('Expected `limit` to be a finite number');
 	}
@@ -20,6 +20,48 @@ const pThrottle = ({limit, interval}) => {
 
 	let currentTick = 0;
 	let activeCount = 0;
+
+	function windowedDelay() {
+		const now = Date.now();
+
+		if ((now - currentTick) > interval) {
+			activeCount = 1;
+			currentTick = now;
+			return 0;
+		}
+
+		if (activeCount < limit) {
+			activeCount++;
+		} else {
+			currentTick += interval;
+			activeCount = 1;
+		}
+
+		return currentTick - now;
+	}
+
+	const strictTicks = [];
+
+	function strictDelay() {
+		const now = Date.now();
+
+		if (strictTicks.length < limit) {
+			strictTicks.push(now);
+			return 0;
+		}
+
+		const earliestTime = strictTicks.shift() + interval;
+
+		if (now >= earliestTime) {
+			strictTicks.push(now);
+			return 0;
+		}
+
+		strictTicks.push(earliestTime);
+		return earliestTime - now;
+	}
+
+	const getDelay = strict ? strictDelay : windowedDelay;
 
 	return function_ => {
 		const throttled = function (...args) {
@@ -34,19 +76,7 @@ const pThrottle = ({limit, interval}) => {
 					queue.delete(timeout);
 				};
 
-				const now = Date.now();
-
-				if ((now - currentTick) > interval) {
-					activeCount = 1;
-					currentTick = now;
-				} else if (activeCount < limit) {
-					activeCount++;
-				} else {
-					currentTick += interval;
-					activeCount = 1;
-				}
-
-				timeout = setTimeout(execute, currentTick - now);
+				timeout = setTimeout(execute, getDelay());
 
 				queue.set(timeout, reject);
 			});
@@ -59,6 +89,7 @@ const pThrottle = ({limit, interval}) => {
 			}
 
 			queue.clear();
+			strictTicks.splice(0, strictTicks.length);
 		};
 
 		throttled.isEnabled = true;
