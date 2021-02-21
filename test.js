@@ -13,7 +13,7 @@ test('main', async t => {
 	const end = timeSpan();
 	const throttled = pThrottle({limit, interval})(async () => {});
 
-	await Promise.all(new Array(totalRuns).fill(0).map(x => throttled(x)));
+	await Promise.all(Array.from({length: totalRuns}).fill(0).map(x => throttled(x)));
 
 	const totalTime = (totalRuns * interval) / limit;
 	t.true(inRange(end(), {
@@ -30,7 +30,7 @@ test('strict mode', async t => {
 	const end = timeSpan();
 	const throttled = pThrottle({limit, interval, strict})(async () => {});
 
-	await Promise.all(new Array(totalRuns).fill(0).map(x => throttled(x)));
+	await Promise.all(Array.from({length: totalRuns}).fill(0).map(x => throttled(x)));
 
 	const totalTime = (totalRuns * interval) / limit;
 	t.true(inRange(end(), {
