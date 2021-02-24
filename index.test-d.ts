@@ -26,10 +26,10 @@ const strictThrottledLazyUnicorn = pThrottle({
 
 expectType<AbortError>(new AbortError());
 
-expectType<ThrottledFunction<string, string>>(throttledUnicorn);
-expectType<ThrottledFunction<string, Promise<string>>>(throttledLazyUnicorn);
-expectType<ThrottledFunction<string, string>>(strictThrottledUnicorn);
-expectType<ThrottledFunction<string, Promise<string>>>(strictThrottledLazyUnicorn);
+expectType<ThrottledFunction<[string], string>>(throttledUnicorn);
+expectType<ThrottledFunction<[string], Promise<string>>>(throttledLazyUnicorn);
+expectType<ThrottledFunction<[string], string>>(strictThrottledUnicorn);
+expectType<ThrottledFunction<[string], Promise<string>>>(strictThrottledLazyUnicorn);
 
 throttledUnicorn.abort();
 throttledLazyUnicorn.abort();
