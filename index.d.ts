@@ -10,8 +10,8 @@ declare class AbortErrorClass extends Error {
 type PromiseResolve<ValueType> = ValueType extends PromiseLike<infer ValueType> ? Promise<ValueType> : Promise<ValueType>;
 
 declare namespace pThrottle {
-	type ThrottledFunction<Argument, ReturnValue> = ((
-		...arguments: Argument[]
+	type ThrottledFunction<Argument extends readonly unknown[], ReturnValue> = ((
+		...arguments: Argument
 	) => PromiseResolve<ReturnValue>) & {
 		/**
 		Whether future function calls should be throttled or count towards throttling thresholds.
@@ -78,7 +78,7 @@ declare const pThrottle: {
 	*/
 	(
 		options: pThrottle.Options
-	): <Argument, ReturnValue>(function_: (...arguments: Argument[]) => ReturnValue) => pThrottle.ThrottledFunction<Argument, ReturnValue>;
+	): <Argument extends readonly unknown[], ReturnValue>(function_: (...arguments: Argument) => ReturnValue) => pThrottle.ThrottledFunction<Argument, ReturnValue>;
 };
 
 export = pThrottle;

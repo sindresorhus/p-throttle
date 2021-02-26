@@ -24,16 +24,23 @@ const strictThrottledLazyUnicorn = pThrottle({
 	strict: true
 })(async (index: string) => '🦄');
 
+const throttledTaggedUnicorn = pThrottle({
+	limit: 1,
+	interval: 1000
+})((index: number, tag: string) => `${tag}: 🦄`);
+
 expectType<AbortError>(new AbortError());
 
-expectType<ThrottledFunction<string, string>>(throttledUnicorn);
-expectType<ThrottledFunction<string, Promise<string>>>(throttledLazyUnicorn);
-expectType<ThrottledFunction<string, string>>(strictThrottledUnicorn);
-expectType<ThrottledFunction<string, Promise<string>>>(strictThrottledLazyUnicorn);
+expectType<ThrottledFunction<[string], string>>(throttledUnicorn);
+expectType<ThrottledFunction<[string], Promise<string>>>(throttledLazyUnicorn);
+expectType<ThrottledFunction<[string], string>>(strictThrottledUnicorn);
+expectType<ThrottledFunction<[string], Promise<string>>>(strictThrottledLazyUnicorn);
+expectType<ThrottledFunction<[number, string], Promise<string>>>(throttledTaggedUnicorn);
 
 throttledUnicorn.abort();
 throttledLazyUnicorn.abort();
 strictThrottledUnicorn.abort();
 strictThrottledLazyUnicorn.abort();
+throttledTaggedUnicorn.abort();
 
 expectType<boolean>(throttledUnicorn.isEnabled);
