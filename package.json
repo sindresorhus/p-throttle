@@ -1,6 +1,6 @@
 {
 	"name": "p-throttle",
-	"version": "4.1.0",
+	"version": "4.1.1",
 	"description": "Throttle promise-returning & async functions",
 	"license": "MIT",
 	"repository": "sindresorhus/p-throttle",
