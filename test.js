@@ -2,7 +2,7 @@ import test from 'ava';
 import inRange from 'in-range';
 import timeSpan from 'time-span';
 import delay from 'delay';
-import pThrottle from './index.js';
+import pThrottle, {AbortError} from './index.js';
 
 const fixture = Symbol('fixture');
 
@@ -18,7 +18,7 @@ test('main', async t => {
 	const totalTime = (totalRuns * interval) / limit;
 	t.true(inRange(end(), {
 		start: totalTime - 200,
-		end: totalTime + 200
+		end: totalTime + 200,
 	}));
 });
 
@@ -35,7 +35,7 @@ test('strict mode', async t => {
 	const totalTime = (totalRuns * interval) / limit;
 	t.true(inRange(end(), {
 		start: totalTime - 200,
-		end: totalTime + 200
+		end: totalTime + 200,
 	}));
 });
 
@@ -52,7 +52,7 @@ test('limits after pause in strict mode', async t => {
 
 	await delay(pause);
 
-	for (let i = 0; i < limit + 1; i++) {
+	for (let index = 0; index < limit + 1; index++) {
 		promises.push(throttled());
 	}
 
@@ -84,7 +84,7 @@ test('limits after pause in windowed mode', async t => {
 
 	await delay(pause);
 
-	for (let i = 0; i < limit + 1; i++) {
+	for (let index = 0; index < limit + 1; index++) {
 		promises.push(throttled());
 	}
 
@@ -107,7 +107,7 @@ test('passes arguments through', async t => {
 
 test('can be aborted', async t => {
 	const limit = 1;
-	const interval = 10000; // 10 seconds
+	const interval = 10_000; // 10 seconds
 	const end = timeSpan();
 	const throttled = pThrottle({limit, interval})(async () => {});
 
@@ -121,7 +121,7 @@ test('can be aborted', async t => {
 		error = error_;
 	}
 
-	t.true(error instanceof pThrottle.AbortError);
+	t.true(error instanceof AbortError);
 	t.true(end() < 100);
 });
 
@@ -130,7 +130,7 @@ test('can be disabled', async t => {
 
 	const throttled = pThrottle({
 		limit: 1,
-		interval: 10000
+		interval: 10_000,
 	})(async () => ++counter);
 
 	t.is(await throttled(), 1);
@@ -146,12 +146,12 @@ test('can be disabled', async t => {
 test('promise rejections are thrown', async t => {
 	const throttled = pThrottle({
 		limit: 1,
-		interval: 10000
+		interval: 10_000,
 	})(() => Promise.reject(new Error('Catch me if you can!')));
 
 	await t.throwsAsync(throttled, {
 		instanceOf: Error,
-		message: 'Catch me if you can!'
+		message: 'Catch me if you can!',
 	});
 });
 

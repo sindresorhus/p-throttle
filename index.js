@@ -1,13 +1,11 @@
-'use strict';
-
-class AbortError extends Error {
+export class AbortError extends Error {
 	constructor() {
 		super('Throttled function aborted');
 		this.name = 'AbortError';
 	}
 }
 
-const pThrottle = ({limit, interval, strict}) => {
+export default function pThrottle({limit, interval, strict}) {
 	if (!Number.isFinite(limit)) {
 		throw new TypeError('Expected `limit` to be a finite number');
 	}
@@ -96,7 +94,4 @@ const pThrottle = ({limit, interval, strict}) => {
 
 		return throttled;
 	};
-};
-
-module.exports = pThrottle;
-module.exports.AbortError = AbortError;
+}

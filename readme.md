@@ -8,8 +8,8 @@ Useful for rate limiting calls to an external API, for example.
 
 ## Install
 
-```
-$ npm install p-throttle
+```sh
+npm install p-throttle
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ $ npm install p-throttle
 Here, the throttled function is only called twice a second:
 
 ```js
-const pThrottle = require('p-throttle');
+import pThrottle from 'p-throttle';
 
 const now = Date.now();
 
@@ -26,13 +26,15 @@ const throttle = pThrottle({
 	interval: 1000
 });
 
-const throttled = throttle(index => {
+const throttled = throttle(async index => {
 	const secDiff = ((Date.now() - now) / 1000).toFixed();
-	return Promise.resolve(`${index}: ${secDiff}s`);
+	return `${index}: ${secDiff}s`;
 });
 
-for (let i = 1; i <= 6; i++) {
-	throttled(i).then(console.log);
+for (let index = 1; index <= 6; index++) {
+	(async () => {
+		console.log(await throttled(index));
+	})();
 }
 //=> 1: 0s
 //=> 2: 0s
@@ -46,9 +48,7 @@ for (let i = 1; i <= 6; i++) {
 
 ### pThrottle(options)
 
-Returns a `throttle` function.
-
-Returns a throttled version of `fn`.
+Returns a throttle function.
 
 #### options
 
@@ -60,13 +60,13 @@ Both the `limit` and `interval` options must be specified.
 
 Type: `number`
 
-Maximum number of calls within an `interval`.
+The maximum number of calls within an `interval`.
 
 ##### interval
 
 Type: `number`
 
-Timespan for `limit` in milliseconds.
+The timespan for `limit` in milliseconds.
 
 #### strict
 
@@ -77,11 +77,13 @@ Use a strict, more resource intensive, throttling algorithm. The default algorit
 
 ### throttle(function_)
 
+Returns a throttled version of `function_`.
+
 #### function_
 
 Type: `Function`
 
-Promise-returning/async function or a normal function.
+A promise-returning/async function or a normal function.
 
 ### throttledFn.abort()
 
