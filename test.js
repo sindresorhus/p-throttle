@@ -61,12 +61,12 @@ test('limits after pause in strict mode', async t => {
 	for (const [index, executed] of results.entries()) {
 		const elapsed = executed - start;
 		if (index < limit - 1) {
-			t.true(inRange(elapsed, {start: pause, end: pause + 15}), 'Executed immediately after the pause');
+			t.true(inRange(elapsed, {start: pause, end: pause + 50}), 'Executed immediately after the pause');
 		} else if (index === limit - 1) {
-			t.true(inRange(elapsed, {start: interval, end: interval + 15}), 'Executed after the interval');
+			t.true(inRange(elapsed, {start: interval, end: interval + 50}), 'Executed after the interval');
 		} else {
 			const difference = executed - results[index - limit];
-			t.true(inRange(difference, {start: interval - 10, end: interval + 15}), 'Waited the interval');
+			t.true(inRange(difference, {start: interval - 10, end: interval + 50}), 'Waited the interval');
 		}
 	}
 });
