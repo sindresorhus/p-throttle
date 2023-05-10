@@ -20,6 +20,11 @@ export type ThrottledFunction<Argument extends readonly unknown[], ReturnValue> 
 		Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
 		*/
 	abort(): void;
+
+	/**
+		The current length of the promise queue.
+		*/
+	queueLength(): number;
 };
 
 export interface Options {

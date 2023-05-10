@@ -96,6 +96,13 @@ Default: `true`
 
 Whether future function calls should be throttled and count towards throttling thresholds.
 
+### throttledFn.queueLength()
+
+Type: `Function`\
+Returns: `number`
+
+Returns the current length of the promise queue.
+
 ## Related
 
 - [p-debounce](https://github.com/sindresorhus/p-debounce) - Debounce promise-returning & async functions
