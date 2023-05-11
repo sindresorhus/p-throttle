@@ -22,23 +22,23 @@ test('main', async t => {
 	}));
 });
 
-test('queue length', async t => {
+test('queue size', async t => {
 	const limit = 10;
 	const interval = 100;
 	const throttled = pThrottle({limit, interval})(() => Date.now());
 	const promises = [];
 
-	t.true(throttled.queueLength() === 0);
+	t.is(throttled.queueSize(), 0);
 
 	for (let index = 0; index < limit; index++) {
 		promises.push(throttled());
 	}
 
-	t.true(throttled.queueLength() === limit);
+	t.is(throttled.queueSize(), limit);
 
 	await Promise.all(promises);
 
-	t.true(throttled.queueLength() === 0);
+	t.is(throttled.queueSize(), 0);
 });
 
 test('strict mode', async t => {

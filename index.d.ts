@@ -22,9 +22,9 @@ export type ThrottledFunction<Argument extends readonly unknown[], ReturnValue> 
 	abort(): void;
 
 	/**
-		The current length of the promise queue.
+		The number of queued items waiting to be executed.
 		*/
-	queueLength(): number;
+	queueSize(): number;
 };
 
 export interface Options {

@@ -92,7 +92,7 @@ export default function pThrottle({limit, interval, strict}) {
 
 		throttled.isEnabled = true;
 
-		throttled.queueLength = () => queue.size;
+		throttled.queueSize = () => queue.size;
 
 		return throttled;
 	};

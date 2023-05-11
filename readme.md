@@ -96,12 +96,12 @@ Default: `true`
 
 Whether future function calls should be throttled and count towards throttling thresholds.
 
-### throttledFn.queueLength()
+### throttledFn.queueSize()
 
 Type: `Function`\
 Returns: `number`
 
-Returns the current length of the promise queue.
+The number of queued items waiting to be executed.
 
 ## Related
 
