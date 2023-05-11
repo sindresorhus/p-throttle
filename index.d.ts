@@ -17,14 +17,14 @@ export type ThrottledFunction<Argument extends readonly unknown[], ReturnValue> 
 	isEnabled: boolean;
 
 	/**
+	The number of queued items waiting to be executed.
+	*/
+	readonly queueSize: number;
+
+	/**
 	Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
 	*/
 	abort(): void;
-
-	/**
-	The number of queued items waiting to be executed.
-	*/
-	queueSize(): number;
 };
 
 export interface Options {

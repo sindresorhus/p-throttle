@@ -28,17 +28,17 @@ test('queue size', async t => {
 	const throttled = pThrottle({limit, interval})(() => Date.now());
 	const promises = [];
 
-	t.is(throttled.queueSize(), 0);
+	t.is(throttled.queueSize, 0);
 
 	for (let index = 0; index < limit; index++) {
 		promises.push(throttled());
 	}
 
-	t.is(throttled.queueSize(), limit);
+	t.is(throttled.queueSize, limit);
 
 	await Promise.all(promises);
 
-	t.is(throttled.queueSize(), 0);
+	t.is(throttled.queueSize, 0);
 });
 
 test('strict mode', async t => {

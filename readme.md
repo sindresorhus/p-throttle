@@ -96,10 +96,9 @@ Default: `true`
 
 Whether future function calls should be throttled and count towards throttling thresholds.
 
-### throttledFn.queueSize()
+### throttledFn.queueSize
 
-Type: `Function`\
-Returns: `number`
+Type: `number`
 
 The number of queued items waiting to be executed.
 
