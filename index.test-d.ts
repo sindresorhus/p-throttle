@@ -41,3 +41,4 @@ strictThrottledLazyUnicorn.abort();
 throttledTaggedUnicorn.abort();
 
 expectType<boolean>(throttledUnicorn.isEnabled);
+expectType<number>(throttledUnicorn.queueSize);

@@ -10,15 +10,20 @@ type PromiseResolve<ValueType> = ValueType extends PromiseLike<infer ValueType> 
 export type ThrottledFunction<Argument extends readonly unknown[], ReturnValue> = ((...arguments: Argument) => PromiseResolve<ReturnValue>)
 & {
 	/**
-		Whether future function calls should be throttled or count towards throttling thresholds.
+	Whether future function calls should be throttled or count towards throttling thresholds.
 
-		@default true
-		*/
+	@default true
+	*/
 	isEnabled: boolean;
 
 	/**
-		Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
-		*/
+	The number of queued items waiting to be executed.
+	*/
+	readonly queueSize: number;
+
+	/**
+	Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
+	*/
 	abort(): void;
 };
 
