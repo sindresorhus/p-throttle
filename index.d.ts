@@ -4,11 +4,7 @@ export class AbortError extends Error {
 	private constructor();
 }
 
-// TODO: Use the `Awaited` utility instead when targeting TS 4.5.
-type PromiseResolve<ValueType> = ValueType extends PromiseLike<infer ValueType> ? Promise<ValueType> : Promise<ValueType>;
-
-export type ThrottledFunction<Argument extends readonly unknown[], ReturnValue> = ((...arguments: Argument) => PromiseResolve<ReturnValue>)
-& {
+export type ThrottledFunction<Argument extends readonly unknown[], ReturnValue> = ((...arguments: Argument) => Awaited<ReturnValue>) & {
 	/**
 	Whether future function calls should be throttled or count towards throttling thresholds.
 
@@ -27,7 +23,7 @@ export type ThrottledFunction<Argument extends readonly unknown[], ReturnValue> 
 	abort(): void;
 };
 
-export interface Options {
+export type Options = {
 	/**
 	The maximum number of calls within an `interval`.
 	*/
@@ -44,7 +40,7 @@ export interface Options {
 	@default false
 	*/
 	readonly strict?: boolean;
-}
+};
 
 /**
 [Throttle](https://css-tricks.com/debouncing-throttling-explained-examples/) promise-returning/async/normal functions.

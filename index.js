@@ -43,51 +43,46 @@ export default function pThrottle({limit, interval, strict}) {
 	function strictDelay() {
 		const now = Date.now();
 
-		// Clear the queue if there's a long delay since the last scheduled time
-		if (strictTicks.length > 0 && now - strictTicks[strictTicks.length - 1] > interval) {
+		// Clear the queue if there's a significant delay since the last execution
+		if (strictTicks.length > 0 && now - strictTicks.at(-1) > interval) {
 			strictTicks.length = 0;
 		}
 
-		// If the queue is not full, add the current time
+		// If the queue is not full, add the current time and execute immediately
 		if (strictTicks.length < limit) {
 			strictTicks.push(now);
 			return 0;
 		}
 
-		// Calculate the next execution time
+		// Calculate the next execution time based on the first item in the queue
 		const nextExecutionTime = strictTicks[0] + interval;
 
-		// Remove times that are past and add the next execution time
+		// Shift the queue and add the new execution time
 		strictTicks.shift();
 		strictTicks.push(nextExecutionTime);
 
-		// If the next execution time is in the past, execute immediately
-		if (now >= nextExecutionTime) {
-			return 0;
-		}
-
-		// Otherwise, wait until the next execution time
-		return nextExecutionTime - now;
+		// Calculate the delay for the current execution
+		return Math.max(0, nextExecutionTime - now);
 	}
 
 	const getDelay = strict ? strictDelay : windowedDelay;
 
 	return function_ => {
-		const throttled = function (...args) {
+		const throttled = function (...arguments_) {
 			if (!throttled.isEnabled) {
-				return (async () => function_.apply(this, args))();
+				return (async () => function_.apply(this, arguments_))();
 			}
 
-			let timeout;
+			let timeoutId;
 			return new Promise((resolve, reject) => {
 				const execute = () => {
-					resolve(function_.apply(this, args));
-					queue.delete(timeout);
+					resolve(function_.apply(this, arguments_));
+					queue.delete(timeoutId);
 				};
 
-				timeout = setTimeout(execute, getDelay());
+				timeoutId = setTimeout(execute, getDelay());
 
-				queue.set(timeout, reject);
+				queue.set(timeoutId, reject);
 			});
 		};
 

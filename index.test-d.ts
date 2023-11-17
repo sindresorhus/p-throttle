@@ -1,5 +1,5 @@
 import {expectType} from 'tsd';
-import pThrottle, {ThrottledFunction} from './index.js';
+import pThrottle, {type ThrottledFunction} from './index.js';
 
 const throttledUnicorn = pThrottle({
 	limit: 1,
