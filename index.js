@@ -43,20 +43,31 @@ export default function pThrottle({limit, interval, strict}) {
 	function strictDelay() {
 		const now = Date.now();
 
+		// Clear the queue if there's a long delay since the last scheduled time
+		if (strictTicks.length > 0 && now - strictTicks[strictTicks.length - 1] > interval) {
+			strictTicks.length = 0;
+		}
+
+		// If the queue is not full, add the current time
 		if (strictTicks.length < limit) {
 			strictTicks.push(now);
 			return 0;
 		}
 
-		const earliestTime = strictTicks.shift() + interval;
+		// Calculate the next execution time
+		const nextExecutionTime = strictTicks[0] + interval;
 
-		if (now >= earliestTime) {
-			strictTicks.push(now);
+		// Remove times that are past and add the next execution time
+		strictTicks.shift();
+		strictTicks.push(nextExecutionTime);
+
+		// If the next execution time is in the past, execute immediately
+		if (now >= nextExecutionTime) {
 			return 0;
 		}
 
-		strictTicks.push(earliestTime);
-		return earliestTime - now;
+		// Otherwise, wait until the next execution time
+		return nextExecutionTime - now;
 	}
 
 	const getDelay = strict ? strictDelay : windowedDelay;
