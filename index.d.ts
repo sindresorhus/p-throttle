@@ -45,7 +45,9 @@ export type Options = {
 };
 
 /**
-[Throttle](https://css-tricks.com/debouncing-throttling-explained-examples/) promise-returning/async/normal functions.
+Throttle promise-returning/async/normal functions.
+
+It rate-limits function calls without discarding them, making it ideal for external API interactions where avoiding call loss is crucial.
 
 @returns A throttle function.
 

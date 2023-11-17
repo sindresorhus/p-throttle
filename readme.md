@@ -1,10 +1,10 @@
 # p-throttle
 
-> [Throttle](https://css-tricks.com/debouncing-throttling-explained-examples/) promise-returning & async functions
+> Throttle promise-returning & async functions
 
 It also works with normal functions.
 
-Useful for rate limiting calls to an external API, for example.
+It rate-limits function calls without discarding them, making it ideal for external API interactions where avoiding call loss is crucial.
 
 ## Install
 
