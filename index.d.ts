@@ -4,7 +4,9 @@ export class AbortError extends Error {
 	private constructor();
 }
 
-export type ThrottledFunction<Argument extends readonly unknown[], ReturnValue> = ((...arguments: Argument) => Awaited<ReturnValue>) & {
+type AnyFunction = (...arguments_: readonly any[]) => unknown;
+
+export type ThrottledFunction<F extends AnyFunction> = F & {
 	/**
 	Whether future function calls should be throttled or count towards throttling thresholds.
 
@@ -78,4 +80,4 @@ for (let index = 1; index <= 6; index++) {
 //=> 6: 2s
 ```
 */
-export default function pThrottle(options: Options): <Argument extends readonly unknown[], ReturnValue>(function_: (...arguments: Argument) => ReturnValue) => ThrottledFunction<Argument, ReturnValue>;
+export default function pThrottle(options: Options): <F extends AnyFunction>(function_: F) => ThrottledFunction<F>;
