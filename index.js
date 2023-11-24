@@ -5,7 +5,7 @@ export class AbortError extends Error {
 	}
 }
 
-export default function pThrottle({limit, interval, strict}) {
+export function pThrottleRate({limit, interval, strict}) {
 	if (!Number.isFinite(limit)) {
 		throw new TypeError('Expected `limit` to be a finite number');
 	}
@@ -106,4 +106,68 @@ export default function pThrottle({limit, interval, strict}) {
 
 		return throttled;
 	};
+}
+
+export function pThrottleConcurrency({concurrency}) {
+	if (!(Number.isInteger(concurrency) && concurrency > 0)) {
+		throw new TypeError('Expected `concurrency` to be an integer greater than 0');
+	}
+
+	const queue = [];
+
+	let activeCount = 0;
+
+	async function tryNext() {
+		if (activeCount >= concurrency || queue.length === 0) {
+			return;
+		}
+
+		const {resolve, function_, arguments_} = queue.shift();
+
+		activeCount++;
+
+		const promise = function_.apply(this, arguments_);
+
+		resolve(promise);
+
+		try {
+			await promise;
+		} catch { }
+
+		activeCount--;
+
+		tryNext();
+	}
+
+	return function_ => {
+		const throttled = function (...arguments_) {
+			if (!throttled.isEnabled) {
+				return (async () => function_.apply(this, arguments_))();
+			}
+
+			return new Promise(async (resolve, reject) => {
+				queue.push({resolve, reject, function_, arguments_});
+
+				tryNext();
+			});
+		}
+
+		throttled.abort = () => {
+			for (const {reject} of queue) {
+				reject(new AbortError());
+			}
+
+			queue = [];
+		};
+
+		throttled.isEnabled = true;
+
+		Object.defineProperty(throttled, 'queueSize', {
+			get() {
+				return queue.length;
+			},
+		});
+
+		return throttled;
+	}
 }
