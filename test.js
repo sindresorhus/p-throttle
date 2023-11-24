@@ -2,7 +2,7 @@ import test from 'ava';
 import inRange from 'in-range';
 import timeSpan from 'time-span';
 import delay from 'delay';
-import pThrottle, {AbortError} from './index.js';
+import {pThrottleRate, pThrottleConcurrency, AbortError} from './index.js';
 
 const fixture = Symbol('fixture');
 
@@ -11,7 +11,7 @@ test('main', async t => {
 	const limit = 5;
 	const interval = 100;
 	const end = timeSpan();
-	const throttled = pThrottle({limit, interval})(async () => {});
+	const throttled = pThrottleRate({limit, interval})(async () => {});
 
 	await Promise.all(Array.from({length: totalRuns}).fill(0).map(x => throttled(x)));
 
@@ -25,7 +25,7 @@ test('main', async t => {
 test('queue size', async t => {
 	const limit = 10;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval})(() => Date.now());
 	const promises = [];
 
 	t.is(throttled.queueSize, 0);
@@ -47,7 +47,7 @@ test('strict mode', async t => {
 	const interval = 100;
 	const strict = true;
 	const end = timeSpan();
-	const throttled = pThrottle({limit, interval, strict})(async () => {});
+	const throttled = pThrottleRate({limit, interval, strict})(async () => {});
 
 	await Promise.all(Array.from({length: totalRuns}).fill(0).map(x => throttled(x)));
 
@@ -62,7 +62,7 @@ test('limits after pause in strict mode', async t => {
 	const limit = 10;
 	const interval = 100;
 	const strict = true;
-	const throttled = pThrottle({limit, interval, strict})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval, strict})(() => Date.now());
 	const pause = 40;
 	const promises = [];
 	const start = Date.now();
@@ -94,7 +94,7 @@ test('limits after pause in windowed mode', async t => {
 	const limit = 10;
 	const interval = 100;
 	const strict = false;
-	const throttled = pThrottle({limit, interval, strict})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval, strict})(() => Date.now());
 	const pause = 40;
 	const promises = [];
 	const start = Date.now();
@@ -120,7 +120,7 @@ test('limits after pause in windowed mode', async t => {
 });
 
 test('passes arguments through', async t => {
-	const throttled = pThrottle({limit: 1, interval: 100})(async x => x);
+	const throttled = pThrottleRate({limit: 1, interval: 100})(async x => x);
 	t.is(await throttled(fixture), fixture);
 });
 
@@ -128,7 +128,7 @@ test('can be aborted', async t => {
 	const limit = 1;
 	const interval = 10_000; // 10 seconds
 	const end = timeSpan();
-	const throttled = pThrottle({limit, interval})(async () => {});
+	const throttled = pThrottleRate({limit, interval})(async () => {});
 
 	await throttled();
 	const promise = throttled();
@@ -147,7 +147,7 @@ test('can be aborted', async t => {
 test('can be disabled', async t => {
 	let counter = 0;
 
-	const throttled = pThrottle({
+	const throttled = pThrottleRate({
 		limit: 1,
 		interval: 10_000,
 	})(async () => ++counter);
@@ -163,7 +163,7 @@ test('can be disabled', async t => {
 });
 
 test('promise rejections are thrown', async t => {
-	const throttled = pThrottle({
+	const throttled = pThrottleRate({
 		limit: 1,
 		interval: 10_000,
 	})(() => Promise.reject(new Error('Catch me if you can!')));
@@ -192,8 +192,8 @@ test('`this` is preserved in throttled function', async t => {
 			return this;
 		}
 	}
-	FixtureClass.prototype.foo = pThrottle({limit: 1, interval: 100})(FixtureClass.prototype.foo);
-	FixtureClass.prototype.getThis = pThrottle({limit: 1, interval: 100})(FixtureClass.prototype.getThis);
+	FixtureClass.prototype.foo = pThrottleRate({limit: 1, interval: 100})(FixtureClass.prototype.foo);
+	FixtureClass.prototype.getThis = pThrottleRate({limit: 1, interval: 100})(FixtureClass.prototype.getThis);
 
 	const thisFixture = new FixtureClass();
 
@@ -205,7 +205,7 @@ test('`this` is preserved in throttled function', async t => {
 for (const limit of [1, 5, 10]) {
 	test(`respects limit of ${limit} calls`, async t => {
 		const interval = 100;
-		const throttled = pThrottle({limit, interval})(() => Date.now());
+		const throttled = pThrottleRate({limit, interval})(() => Date.now());
 		const promises = [];
 		const start = Date.now();
 
@@ -221,8 +221,8 @@ for (const limit of [1, 5, 10]) {
 }
 
 test('handles multiple instances independently', async t => {
-	const throttledOne = pThrottle({limit: 1, interval: 100})(() => 'one');
-	const throttledTwo = pThrottle({limit: 1, interval: 200})(() => 'two');
+	const throttledOne = pThrottleRate({limit: 1, interval: 100})(() => 'one');
+	const throttledTwo = pThrottleRate({limit: 1, interval: 200})(() => 'two');
 
 	const resultOne = await throttledOne();
 	const resultTwo = await throttledTwo();
@@ -232,7 +232,7 @@ test('handles multiple instances independently', async t => {
 });
 
 test('disable and re-enable functionality', async t => {
-	const throttled = pThrottle({limit: 1, interval: 1000})(() => Date.now());
+	const throttled = pThrottleRate({limit: 1, interval: 1000})(() => Date.now());
 	const start = Date.now();
 
 	await throttled(); // First call, should pass immediately.
@@ -248,7 +248,7 @@ test('disable and re-enable functionality', async t => {
 test('stability under high load', async t => {
 	const limit = 5;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval})(() => Date.now());
 	const promises = [];
 
 	for (let i = 0; i < 100; i++) {
@@ -260,7 +260,7 @@ test('stability under high load', async t => {
 });
 
 test('handles zero interval', async t => {
-	const throttled = pThrottle({limit: 1, interval: 0})(() => Date.now());
+	const throttled = pThrottleRate({limit: 1, interval: 0})(() => Date.now());
 	const start = Date.now();
 	await throttled();
 	const end = Date.now();
@@ -270,7 +270,7 @@ test('handles zero interval', async t => {
 test('handles simultaneous calls', async t => {
 	const limit = 5;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval})(() => Date.now());
 	const times = await Promise.all(Array.from({length: limit}).map(() => throttled()));
 
 	// Ensure all calls are within the same interval
@@ -282,7 +282,7 @@ test('handles simultaneous calls', async t => {
 test('clears queue after abort', async t => {
 	const limit = 2;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval})(() => Date.now());
 
 	try {
 		await throttled();
@@ -297,7 +297,7 @@ test('clears queue after abort', async t => {
 test('allows immediate execution with high limit', async t => {
 	const limit = 10;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval})(() => Date.now());
 	const start = Date.now();
 	const promises = Array.from({length: 5}, () => throttled());
 	const results = await Promise.all(promises);
@@ -313,7 +313,7 @@ test('allows immediate execution with high limit', async t => {
 test('queues calls beyond limit', async t => {
 	const limit = 2;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval})(() => Date.now());
 	const start = Date.now();
 
 	const firstBatch = Promise.all([throttled(), throttled()]);
@@ -334,7 +334,7 @@ test('queues calls beyond limit', async t => {
 test('resets interval after inactivity', async t => {
 	const limit = 1;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval})(() => Date.now());
 
 	const firstCall = await throttled();
 	await delay(interval + 50); // Inactivity longer than the interval
@@ -346,7 +346,7 @@ test('resets interval after inactivity', async t => {
 test('maintains function execution order', async t => {
 	const limit = 2;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(async value => value);
+	const throttled = pThrottleRate({limit, interval})(async value => value);
 	const results = await Promise.all([throttled(1), throttled(2), throttled(3)]);
 
 	t.deepEqual(results, [1, 2, 3]);
@@ -355,7 +355,7 @@ test('maintains function execution order', async t => {
 test('handles extremely short intervals', async t => {
 	const limit = 1;
 	const interval = 1; // Very short interval
-	const throttled = pThrottle({limit, interval})(() => {});
+	const throttled = pThrottleRate({limit, interval})(() => {});
 	await throttled();
 	await delay(5); // Slight delay
 	await throttled();
@@ -365,7 +365,7 @@ test('handles extremely short intervals', async t => {
 test('executes immediately for limit greater than calls', async t => {
 	const limit = 10;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval})(() => Date.now());
 	const start = Date.now();
 	const results = await Promise.all([throttled(), throttled()]);
 	const end = Date.now();
@@ -380,7 +380,7 @@ test('executes immediately for limit greater than calls', async t => {
 test('manages rapid successive calls', async t => {
 	const limit = 3;
 	const interval = 50;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const throttled = pThrottleRate({limit, interval})(() => Date.now());
 	const results = [];
 
 	for (let i = 0; i < 10; i++) {
@@ -393,3 +393,5 @@ test('manages rapid successive calls', async t => {
 	await Promise.all(results);
 	t.pass(); // Test passes if all promises resolve without error
 });
+
+// TODO: Test pThrottleConcurrency

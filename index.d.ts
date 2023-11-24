@@ -25,7 +25,7 @@ export type ThrottledFunction<F extends AnyFunction> = F & {
 	abort(): void;
 };
 
-export type Options = {
+export type RateOptions = {
 	/**
 	The maximum number of calls within an `interval`.
 	*/
@@ -82,4 +82,50 @@ for (let index = 1; index <= 6; index++) {
 //=> 6: 2s
 ```
 */
-export default function pThrottle(options: Options): <F extends AnyFunction>(function_: F) => ThrottledFunction<F>;
+export function pThrottleRate(options: RateOptions): <F extends AnyFunction>(function_: F) => ThrottledFunction<F>;
+
+export type ConcurrencyOptions = {
+	/**
+	The maximum amount of times it can be running at once.
+	*/
+	readonly concurrency: number;
+};
+
+/**
+Throttle promise-returning/async/normal functions.
+
+It limits the concurrency of function executions without discarding them, making it ideal for avoiding race conditions, or for computationally expensive operations.
+
+@returns A throttle function.
+
+The `concurrency` option must be specified.
+
+@example
+```
+import {pThrottleConcurrency} from 'p-throttle';
+import ky from 'ky';
+import {promises as fs} from 'node:fs';
+
+const throttle = pThrottleConcurrency({
+	concurrency: 1
+});
+
+const update = throttle(async () => {
+	const data = await ky('https://raw.githubusercontent.com/sindresorhus/superb/main/words.json').json();
+
+	await writeFile('words.txt', JSON.stringify(data));
+});
+
+const read = throttle(async () => {
+	return JSON.parse(await readFile('words.txt', {encoding: 'utf8'}));
+})
+
+// update() and read() don't encounter a race condition!
+void update();
+const words = await read();
+
+console.log(words);
+//=> ['ace', 'amazing', 'astonishing', ...]
+```
+*/
+export function pThrottleConcurrency(options: ConcurrencyOptions): <F extends AnyFunction>(function_: F) => ThrottledFunction<F>;

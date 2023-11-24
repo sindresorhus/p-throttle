@@ -4,7 +4,7 @@
 
 It also works with normal functions.
 
-It rate-limits function calls without discarding them, making it ideal for external API interactions where avoiding call loss is crucial.
+It limits function calls without discarding them, making it ideal for external API interactions where avoiding call loss is crucial.
 
 ## Install
 
@@ -17,11 +17,11 @@ npm install p-throttle
 Here, the throttled function is only called twice a second:
 
 ```js
-import pThrottle from 'p-throttle';
+import {pThrottleRate} from 'p-throttle';
 
 const now = Date.now();
 
-const throttle = pThrottle({
+const throttle = pThrottleRate({
 	limit: 2,
 	interval: 1000
 });
@@ -44,11 +44,42 @@ for (let index = 1; index <= 6; index++) {
 //=> 6: 2s
 ```
 
+Here, the throttled functions are called one at a time:
+
+```js
+import {pThrottleConcurrency} from 'p-throttle';
+import ky from 'ky';
+import {promises as fs} from 'node:fs';
+
+const throttle = pThrottleConcurrency({
+	concurrency: 1
+});
+
+const update = throttle(async () => {
+	const data = await ky('https://raw.githubusercontent.com/sindresorhus/superb/main/words.json').json();
+
+	await writeFile('words.txt', JSON.stringify(data));
+});
+
+const read = throttle(async () => {
+	return JSON.parse(await readFile('words.txt', {encoding: 'utf8'}));
+})
+
+// update() and read() don't encounter a race condition!
+void update();
+const words = await read();
+
+console.log(words);
+//=> ['ace', 'amazing', 'astonishing', ...]
+```
+
 ## API
 
-### pThrottle(options)
+### pThrottleRate(options)
 
-Returns a throttle function.
+Limit the rate of calls within an interval. Useful for following API rate limits.
+
+Returns a [throttle function](#throttlefunction_).
 
 #### options
 
@@ -68,12 +99,26 @@ Type: `number`
 
 The timespan for `limit` in milliseconds.
 
-#### strict
+##### strict
 
 Type: `boolean`\
 Default: `false`
 
 Use a strict, more resource intensive, throttling algorithm. The default algorithm uses a windowed approach that will work correctly in most cases, limiting the total number of calls at the specified limit per interval window. The strict algorithm throttles each call individually, ensuring the limit is not exceeded for any interval.
+
+### pThrottleConcurrency(options)
+
+Limit the concurrency of function executions. Useful for avoiding race conditions, or for computationally expensive operations.
+
+Returns a [throttle function](#throttlefunction_).
+
+#### options
+
+##### concurrency
+
+Type: `number`
+
+The maximum amount of times it can be running at once.
 
 ### throttle(function_)
 
