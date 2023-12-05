@@ -68,12 +68,39 @@ Type: `number`
 
 The timespan for `limit` in milliseconds.
 
-#### strict
+##### strict
 
 Type: `boolean`\
 Default: `false`
 
 Use a strict, more resource intensive, throttling algorithm. The default algorithm uses a windowed approach that will work correctly in most cases, limiting the total number of calls at the specified limit per interval window. The strict algorithm throttles each call individually, ensuring the limit is not exceeded for any interval.
+
+##### onDelay
+
+Type: `Function`
+
+Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within a the given `interval`. Can be useful for monitoring the throttling efficiency.
+
+In the following example, the third call gets delayed and triggers the `onDelay` callback:
+
+```js
+import pThrottle from 'p-throttle';
+
+const throttle = pThrottle({
+	limit: 2,
+	interval: 1000,
+	onDelay: () => console.log('Reached the interval limit, the call is delayed'),
+});
+
+const throttled = throttle(() => console.log('Executing...'));
+await throttled(); 
+await throttled(); 
+await throttled(); 
+//=> Executing...
+//=> Executing...
+//=> Reached the interval limit, the call is delayed
+//=> Executing...
+```
 
 ### throttle(function_)
 

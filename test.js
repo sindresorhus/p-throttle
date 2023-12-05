@@ -423,5 +423,4 @@ test('onDelay', async t => {
 	t.is(delayedCounter, delayedExecutions);
 
 	await Promise.all(promises);
-	t.pass();
 });
