@@ -20,7 +20,7 @@ export default function pThrottle({limit, interval, strict}) {
 	let activeCount = 0;
 
 	function windowedDelay() {
-		const now = Date.now();
+		const now = performance.now();
 
 		if ((now - currentTick) > interval) {
 			activeCount = 1;
@@ -41,7 +41,7 @@ export default function pThrottle({limit, interval, strict}) {
 	const strictTicks = [];
 
 	function strictDelay() {
-		const now = Date.now();
+		const now = performance.now();
 
 		// Clear the queue if there's a significant delay since the last execution
 		if (strictTicks.length > 0 && now - strictTicks.at(-1) > interval) {
