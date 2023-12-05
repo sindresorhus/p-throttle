@@ -25,6 +25,7 @@ test('main', async t => {
 test('queue size', async t => {
 	const limit = 10;
 	const interval = 100;
+	const delayedExecutions = 20;
 	const throttled = pThrottle({limit, interval})(() => Date.now());
 	const promises = [];
 
@@ -34,7 +35,13 @@ test('queue size', async t => {
 		promises.push(throttled());
 	}
 
-	t.is(throttled.queueSize, limit);
+	t.is(throttled.queueSize, 0);
+
+	for (let index = 0; index < delayedExecutions; index++) {
+		promises.push(throttled());
+	}
+
+	t.is(throttled.queueSize, delayedExecutions);
 
 	await Promise.all(promises);
 

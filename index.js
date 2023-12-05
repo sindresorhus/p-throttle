@@ -80,9 +80,13 @@ export default function pThrottle({limit, interval, strict}) {
 					queue.delete(timeoutId);
 				};
 
-				timeoutId = setTimeout(execute, getDelay());
-
-				queue.set(timeoutId, reject);
+				const delay = getDelay();
+				if (delay > 0) {
+					timeoutId = setTimeout(execute, delay);
+					queue.set(timeoutId, reject);
+				} else {
+					execute();
+				}
 			});
 		};
 
