@@ -59,9 +59,9 @@ export type Options = {
 	});
 
 	const throttled = throttle(() => console.log('Executing...'));
-	await throttled(); 
-	await throttled(); 
-	await throttled(); 
+	await throttled();
+	await throttled();
+	await throttled();
 	//=> Executing...
 	//=> Executing...
 	//=> Reached the interval limit, the call is delayed
