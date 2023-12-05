@@ -53,9 +53,7 @@ export type Options = {
 	const throttle = pThrottle({
 		limit: 2,
 		interval: 1000,
-		onDelay: () => {
-  			console.log('Reached interval limit, call is delayed');
-		},
+		onDelay: () => console.log('Reached interval limit, call is delayed'),
 	});
 
 	const throttled = throttle(() => console.log('Executing...'));
