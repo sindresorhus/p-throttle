@@ -43,7 +43,7 @@ export type Options = {
 	*/
 	readonly strict?: boolean;
 	/**
-	A callback for when a call gets delayed because the number of calls in the `interval` exceeded the `limit`.
+	A callback for when a call gets delayed due to the number of calls in the `interval` exceeded the `limit`.
 
 	@example
 	```
