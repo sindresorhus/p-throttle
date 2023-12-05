@@ -50,12 +50,18 @@ export type Options = {
 	const throttle = pThrottle({
 		limit: 2,
 		interval: 1000,
-		onDelay: () => console.log('Reached the interval limit, the call is delayed'),
+		onDelay: () => {
+  			console.log('Reached interval limit, call is delayed');
+		},
 	});
-	const throttled = throttle(() => console.log('Executing...'));
-	await throttled(); //=> Executing...
-	await throttled(); //=> Executing...
-	await throttled(); //=> Reached the interval limit, the call is delayed
+
+	const throttled = throttle(() => {
+ 		console.log('Executing…');
+   	});
+
+	await throttled(); //=> Executing…
+	await throttled(); //=> Executing…
+	await throttled(); //=> Reached interval limit, call is delayed
 	```
 	*/
 	readonly onDelay?: () => void | Promise<void>;
