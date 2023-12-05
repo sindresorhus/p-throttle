@@ -400,3 +400,28 @@ test('manages rapid successive calls', async t => {
 	await Promise.all(results);
 	t.pass(); // Test passes if all promises resolve without error
 });
+
+test('onDelay', async t => {
+	let delayedCounter = 0;
+	const limit = 10;
+	const interval = 100;
+	const delayedExecutions = 20;
+	const onDelay = () => delayedCounter++;
+	const throttled = pThrottle({limit, interval, onDelay})(() => Date.now());
+	const promises = [];
+
+	for (let index = 0; index < limit; index++) {
+		promises.push(throttled());
+	}
+
+	t.is(delayedCounter, 0);
+
+	for (let index = 0; index < delayedExecutions; index++) {
+		promises.push(throttled());
+	}
+
+	t.is(delayedCounter, delayedExecutions);
+
+	await Promise.all(promises);
+	t.pass();
+});

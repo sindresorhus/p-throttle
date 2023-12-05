@@ -42,6 +42,23 @@ export type Options = {
 	@default false
 	*/
 	readonly strict?: boolean;
+	/**
+	A callback for when a call gets delayed because the number of calls in the `interval` exceeded the `limit`.
+
+	@example
+	```
+	const throttle = pThrottle({
+		limit: 2,
+		interval: 1000,
+		onDelay: () => console.log('Reached the interval limit, the call is delayed'),
+	});
+	const throttled = throttle(() => console.log('Executing...'));
+	await throttled(); //=> Executing...
+	await throttled(); //=> Executing...
+	await throttled(); //=> Reached the interval limit, the call is delayed
+	```
+	*/
+	readonly onDelay?: () => void | Promise<void>;
 };
 
 /**
