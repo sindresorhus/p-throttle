@@ -90,14 +90,17 @@ const throttle = pThrottle({
 	limit: 2,
 	interval: 1000,
 	onDelay: () => {
-		console.log('Reached the interval limit, the call is delayed');
+		console.log('Reached interval limit, call is delayed');
 	},
 });
 
-const throttled = throttle(() => console.log('Executing...'));
-await throttled(); 
-await throttled(); 
-await throttled(); 
+const throttled = throttle(() => {
+	console.log('Executing...');
+});
+
+await throttled();
+await throttled();
+await throttled();
 //=> Executing...
 //=> Executing...
 //=> Reached the interval limit, the call is delayed
