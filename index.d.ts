@@ -44,7 +44,9 @@ export type Options = {
 	readonly strict?: boolean;
 
 	/**
-	Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within a the given `interval`. Can be useful for monitoring the throttling efficiency.
+	Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within a the given `interval`.
+
+ 	Can be useful for monitoring the throttling efficiency.
 
 	@example
 	```
@@ -58,7 +60,10 @@ export type Options = {
 		},
 	});
 
-	const throttled = throttle(() => console.log('Executing...'));
+	const throttled = throttle(() => {
+ 		console.log('Executing...');
+   	});
+
 	await throttled();
 	await throttled();
 	await throttled();
