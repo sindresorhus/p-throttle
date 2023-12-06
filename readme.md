@@ -89,7 +89,9 @@ import pThrottle from 'p-throttle';
 const throttle = pThrottle({
 	limit: 2,
 	interval: 1000,
-	onDelay: () => console.log('Reached the interval limit, the call is delayed'),
+	onDelay: () => {
+		console.log('Reached the interval limit, the call is delayed');
+	},
 });
 
 const throttled = throttle(() => console.log('Executing...'));
