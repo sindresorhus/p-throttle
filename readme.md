@@ -79,7 +79,9 @@ Use a strict, more resource intensive, throttling algorithm. The default algorit
 
 Type: `Function`
 
-Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within a the given `interval`. Can be useful for monitoring the throttling efficiency.
+Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within the given `interval`.
+
+Can be useful for monitoring the throttling efficiency.
 
 In the following example, the third call gets delayed and triggers the `onDelay` callback:
 
