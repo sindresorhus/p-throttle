@@ -44,7 +44,7 @@ export type Options = {
 	readonly strict?: boolean;
 
 	/**
-	Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within a the given `interval`.
+	Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within the given `interval`.
 
  	Can be useful for monitoring the throttling efficiency.
 
