@@ -42,6 +42,38 @@ export type Options = {
 	@default false
 	*/
 	readonly strict?: boolean;
+
+	/**
+	Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within the given `interval`.
+
+ 	Can be useful for monitoring the throttling efficiency.
+
+	@example
+	```
+	import pThrottle from 'p-throttle';
+
+	const throttle = pThrottle({
+		limit: 2,
+		interval: 1000,
+		onDelay: () => {
+			console.log('Reached interval limit, call is delayed');
+		},
+	});
+
+	const throttled = throttle(() => {
+ 		console.log('Executing...');
+   	});
+
+	await throttled();
+	await throttled();
+	await throttled();
+	//=> Executing...
+	//=> Executing...
+	//=> Reached interval limit, call is delayed
+	//=> Executing...
+	```
+	*/
+	readonly onDelay?: () => void;
 };
 
 /**
