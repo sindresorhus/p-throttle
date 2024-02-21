@@ -90,14 +90,18 @@ export type Options = {
 		console.log('Executing...');
 	});
 
+	const throttled = throttle(() => {
+		console.log('Executing...');
+	});
+
 	await throttled();
 	await throttled();
-	const promise = throttled();
 	abortController.abort();
+	let promise = throttled();
 	await promise;
 	//=> Executing...
 	//=> Executing...
-	//=> Promise rejected with AbortError
+	//=> Promise rejected with AbortError (DOMException)
 	```
 	*/
 	readonly signal?: AbortSignal;
