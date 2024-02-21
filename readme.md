@@ -109,6 +109,38 @@ await throttled();
 //=> Executing...
 ```
 
+##### signal
+
+Type: [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+
+An optional signal to listen for abort events. If the signal becomes aborted, all pending and future calls are rejected with a `pThrottle.AbortError` error.
+
+You can abort the promises using an [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController):
+
+```js
+import pThrottle from 'p-throttle';
+
+const abortController = new AbortController();
+const throttle = pThrottle({
+	limit: 2,
+	interval: 1000,
+	signal: abortController.signal
+});
+
+const throttled = throttle(() => {
+	console.log('Executing...');
+});
+
+await throttled();
+await throttled();
+abortController.abort();
+let promise = throttled();
+await promise;
+//=> Executing...
+//=> Executing...
+//=> Promise rejected with AbortError (DOMException)
+```
+
 ### throttle(function_)
 
 Returns a throttled version of `function_`.

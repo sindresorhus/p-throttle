@@ -74,6 +74,33 @@ export type Options = {
 	```
 	*/
 	readonly onDelay?: () => void;
+
+	/**
+	`AbortSignal` to abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
+
+	@example
+	```
+	const abortController = new AbortController();
+
+	const throttled = pThrottle({
+		limit: 3,
+		interval: 1000,
+		signal: abortController.signal
+	})(() => {
+		console.log('Executing...');
+	});
+
+	await throttled();
+	await throttled();
+	const promise = throttled();
+	abortController.abort();
+	await promise;
+	//=> Executing...
+	//=> Executing...
+	//=> Promise rejected with AbortError
+	```
+	*/
+	readonly signal?: AbortSignal;
 };
 
 /**
