@@ -5,7 +5,7 @@ export class AbortError extends Error {
 	}
 }
 
-export default function pThrottle({limit, interval, strict, onDelay}) {
+export default function pThrottle({limit, interval, strict, onDelay, signal}) {
 	if (!Number.isFinite(limit)) {
 		throw new TypeError('Expected `limit` to be a finite number');
 	}
@@ -108,6 +108,10 @@ export default function pThrottle({limit, interval, strict, onDelay}) {
 				return queue.size;
 			},
 		});
+
+		if (signal) {
+			signal.addEventListener('abort', throttled.abort);
+		}
 
 		return throttled;
 	};

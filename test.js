@@ -151,6 +151,30 @@ test('can be aborted', async t => {
 	t.true(end() < 100);
 });
 
+test('can listen to AbortSignal to abort execution', async t => {
+	const limit = 1;
+	const interval = 10_000; // 10 seconds
+	const end = timeSpan();
+	const abortController = new AbortController();
+	const throttled = pThrottle({limit, interval, signal: abortController.signal})(async x => x);
+
+	const one = await throttled(1);
+	const promise = throttled(2);
+	abortController.abort();
+	let error;
+	let endValue;
+	try {
+		endValue = await promise;
+	} catch (error_) {
+		error = error_;
+	}
+
+	t.true(error instanceof AbortError);
+	t.true(end() < 100);
+	t.true(one === 1);
+	t.true(endValue === undefined);
+});
+
 test('can be disabled', async t => {
 	let counter = 0;
 
