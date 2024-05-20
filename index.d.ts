@@ -18,11 +18,6 @@ export type ThrottledFunction<F extends AnyFunction> = F & {
 	The number of queued items waiting to be executed.
 	*/
 	readonly queueSize: number;
-
-	/**
-	Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
-	*/
-	abort(): void;
 };
 
 export type Options = {
@@ -42,6 +37,11 @@ export type Options = {
 	@default false
 	*/
 	readonly strict?: boolean;
+
+	/**
+	Abort signal
+	*/
+	signal?: AbortSignal;
 
 	/**
 	Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within the given `interval`.

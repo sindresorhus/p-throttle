@@ -135,11 +135,13 @@ test('can be aborted', async t => {
 	const limit = 1;
 	const interval = 10_000; // 10 seconds
 	const end = timeSpan();
-	const throttled = pThrottle({limit, interval})(async () => {});
+	const controller = new AbortController();
+	const {signal} = controller;
+	const throttled = pThrottle({limit, interval, signal})(async () => {});
 
 	await throttled();
 	const promise = throttled();
-	throttled.abort();
+	controller.abort();
 	let error;
 	try {
 		await promise;
@@ -289,14 +291,16 @@ test('handles simultaneous calls', async t => {
 test('clears queue after abort', async t => {
 	const limit = 2;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const controller = new AbortController();
+	const {signal} = controller;
+	const throttled = pThrottle({limit, interval, signal})(() => Date.now());
 
 	try {
 		await throttled();
 		await throttled();
 	} catch {}
 
-	throttled.abort();
+	controller.abort();
 
 	t.is(throttled.queueSize, 0);
 });
