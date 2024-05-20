@@ -2,7 +2,7 @@ import test from 'ava';
 import inRange from 'in-range';
 import timeSpan from 'time-span';
 import delay from 'delay';
-import pThrottle, {AbortError} from './index.js';
+import pThrottle from './index.js';
 
 const fixture = Symbol('fixture');
 
@@ -131,23 +131,29 @@ test('passes arguments through', async t => {
 	t.is(await throttled(fixture), fixture);
 });
 
+test('throw if aborted', t => {
+	const error = t.throws(() => {
+		const controller = new AbortController();
+		controller.abort(new Error('aborted'));
+		pThrottle({limit: 1, interval: 100, signal: controller.signal})(async x => x);
+	});
+
+	t.is(error.message, 'aborted');
+});
+
 test('can be aborted', async t => {
 	const limit = 1;
 	const interval = 10_000; // 10 seconds
 	const end = timeSpan();
-	const throttled = pThrottle({limit, interval})(async () => {});
+	const controller = new AbortController();
+	const throttled = pThrottle({limit, interval, signal: controller.signal})(async () => {});
 
 	await throttled();
 	const promise = throttled();
-	throttled.abort();
-	let error;
-	try {
-		await promise;
-	} catch (error_) {
-		error = error_;
-	}
+	controller.abort(new Error('aborted'));
 
-	t.true(error instanceof AbortError);
+	const error = await t.throwsAsync(promise);
+	t.is(error.message, 'aborted');
 	t.true(end() < 100);
 });
 
@@ -289,14 +295,15 @@ test('handles simultaneous calls', async t => {
 test('clears queue after abort', async t => {
 	const limit = 2;
 	const interval = 100;
-	const throttled = pThrottle({limit, interval})(() => Date.now());
+	const controller = new AbortController();
+	const throttled = pThrottle({limit, interval, signal: controller.signal})(() => Date.now());
 
 	try {
 		await throttled();
 		await throttled();
 	} catch {}
 
-	throttled.abort();
+	controller.abort();
 
 	t.is(throttled.queueSize, 0);
 });

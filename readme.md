@@ -75,6 +75,11 @@ Default: `false`
 
 Use a strict, more resource intensive, throttling algorithm. The default algorithm uses a windowed approach that will work correctly in most cases, limiting the total number of calls at the specified limit per interval window. The strict algorithm throttles each call individually, ensuring the limit is not exceeded for any interval.
 
+#### signal
+Type: [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+
+Allow to abort pending executions by calling `AbortController.abort()`. All unresolved promises are rejected with `signal.reason`.
+
 ##### onDelay
 
 Type: `Function`
@@ -118,10 +123,6 @@ Returns a throttled version of `function_`.
 Type: `Function`
 
 A promise-returning/async function or a normal function.
-
-### throttledFn.abort()
-
-Abort pending executions. All unresolved promises are rejected with a `pThrottle.AbortError` error.
 
 ### throttledFn.isEnabled
 
