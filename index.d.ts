@@ -33,13 +33,14 @@ export type Options = {
 	readonly strict?: boolean;
 
 	/**
-	Abort signal
+	Abort pending executions. When aborted, all unresolved promises are rejected with `signal.reason`.
 
 	@example
 	```
 	import pThrottle from 'p-throttle';
 
 	const controller = new AbortController();
+
 	const throttle = pThrottle({
 		limit: 2,
 		interval: 1000,
@@ -47,8 +48,8 @@ export type Options = {
 	});
 
 	const throttled = throttle(() => {
- 		console.log('Executing...');
-   	});
+		console.log('Executing...');
+	});
 
 	await throttled();
 	await throttled();
@@ -79,8 +80,8 @@ export type Options = {
 	});
 
 	const throttled = throttle(() => {
- 		console.log('Executing...');
-   	});
+		console.log('Executing...');
+	});
 
 	await throttled();
 	await throttled();
