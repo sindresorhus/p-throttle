@@ -91,7 +91,7 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 					clearTimeout(timeout);
 					queue.get(timeout)(signal.reason);
 				}
-	
+
 				queue.clear();
 				strictTicks.splice(0, strictTicks.length);
 			}, {once: true});
