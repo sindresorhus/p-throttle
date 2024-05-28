@@ -85,17 +85,15 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 		};
 
 		signal?.throwIfAborted();
-		if (signal && !signal.aborted) {
-			signal.addEventListener('abort', () => {
-				for (const timeout of queue.keys()) {
-					clearTimeout(timeout);
-					queue.get(timeout)(signal.reason);
-				}
+		signal?.addEventListener('abort', () => {
+			for (const timeout of queue.keys()) {
+				clearTimeout(timeout);
+				queue.get(timeout)(signal.reason);
+			}
 
-				queue.clear();
-				strictTicks.splice(0, strictTicks.length);
-			}, {once: true});
-		}
+			queue.clear();
+			strictTicks.splice(0, strictTicks.length);
+		}, {once: true});
 
 		throttled.isEnabled = true;
 
