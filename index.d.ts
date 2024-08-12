@@ -65,8 +65,8 @@ export type Options = {
    	});
 
 	await throttled(1, 2);
-	await throttled(3 4);
-	await throttled(5 6);
+	await throttled(3, 4);
+	await throttled(5, 6);
 	//=> Executing with 1 2...
 	//=> Executing with 3 4...
 	//=> Reached interval limit, call is delayed for 3 4
