@@ -402,12 +402,12 @@ test('manages rapid successive calls', async t => {
 });
 
 test('onDelay', async t => {
-	const delayedIndices = {};
+	const delayedIndices = [];
 	const limit = 10;
 	const interval = 100;
 	const delayedExecutions = 20;
 	const onDelay = (keyPrefix, index) => {
-		delayedIndices[keyPrefix + index] = true;
+		delayedIndices.push(keyPrefix + index);
 	};
 
 	const throttled = pThrottle({limit, interval, onDelay})((_keyPrefix, _index) => Date.now());
@@ -417,13 +417,13 @@ test('onDelay', async t => {
 		promises.push(throttled('a', index));
 	}
 
-	t.deepEqual(delayedIndices, {});
+	t.deepEqual(delayedIndices, []);
 
 	for (let index = 0; index < delayedExecutions; index++) {
 		promises.push(throttled('b', index));
 	}
 
-	t.like(delayedIndices, {b0: true, b1: true, b19: true, b20: undefined, a0: undefined});
+	t.like(delayedIndices, {0: 'b0', 1: 'b1', 19: 'b19', 20: undefined});
 
 	await Promise.all(promises);
 });
