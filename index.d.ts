@@ -55,13 +55,13 @@ export type Options = {
 	const throttle = pThrottle({
 		limit: 2,
 		interval: 1000,
-		onDelay: (param1, param2) => {
-			console.log(`Reached interval limit, call is delayed for ${param1} ${param2}`);
+		onDelay: (a, b) => {
+			console.log(`Reached interval limit, call is delayed for ${a} ${b}`);
 		},
 	});
 
-	const throttled = throttle((param1, param2) => {
- 		console.log(`Executing with ${param1} ${param2}...`);
+	const throttled = throttle((a, b) => {
+ 		console.log(`Executing with ${a} ${b}...`);
    	});
 
 	await throttled(1, 2);
