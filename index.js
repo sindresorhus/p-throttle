@@ -60,6 +60,10 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 
 	const getDelay = strict ? strictDelay : windowedDelay;
 
+	const registry = new FinalizationRegistry(({signal, aborted}) => {
+		signal?.removeEventListener('abort', aborted);
+	});
+
 	return function_ => {
 		const throttled = function (...arguments_) {
 			if (!throttled.isEnabled) {
@@ -94,15 +98,10 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 			strictTicks.splice(0, strictTicks.length);
 		};
 
-		if (signal) {
-			signal.throwIfAborted();
-			signal.addEventListener('abort', aborted, {once: true});
+		registry.register(throttled, {signal, aborted});
 
-			const registry = new FinalizationRegistry(() => {
-				signal.removeEventListener('abort', aborted);
-			});
-			registry.register(signal, 'signal');
-		}
+		signal?.throwIfAborted();
+		signal?.addEventListener('abort', aborted, {once: true});
 
 		throttled.isEnabled = true;
 
