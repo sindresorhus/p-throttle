@@ -1,3 +1,7 @@
+const registry = new FinalizationRegistry(({signal, aborted}) => {
+	signal?.removeEventListener('abort', aborted);
+});
+
 export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 	if (!Number.isFinite(limit)) {
 		throw new TypeError('Expected `limit` to be a finite number');
@@ -59,10 +63,6 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 	}
 
 	const getDelay = strict ? strictDelay : windowedDelay;
-
-	const registry = new FinalizationRegistry(({signal, aborted}) => {
-		signal?.removeEventListener('abort', aborted);
-	});
 
 	return function_ => {
 		const throttled = function (...arguments_) {
