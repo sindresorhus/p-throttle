@@ -81,7 +81,7 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 				if (delay > 0) {
 					timeoutId = setTimeout(execute, delay);
 					queue.set(timeoutId, reject);
-					onDelay?.();
+					onDelay?.(...arguments_);
 				} else {
 					execute();
 				}
