@@ -430,7 +430,12 @@ test('onDelay', async t => {
 		promises.push(throttled('b', index));
 	}
 
-	t.like(delayedIndices, {0: 'b0', 1: 'b1', 19: 'b19', 20: undefined});
+	t.like(delayedIndices, {
+		0: 'b0',
+		1: 'b1',
+		19: 'b19',
+		20: undefined,
+	});
 
 	await Promise.all(promises);
 });
