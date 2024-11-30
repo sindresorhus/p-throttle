@@ -82,27 +82,27 @@ Type: [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSign
 Abort pending executions. When aborted, all unresolved promises are rejected with `signal.reason`.
 
 ```js
-	import pThrottle from 'p-throttle';
+import pThrottle from 'p-throttle';
 
-	const controller = new AbortController();
+const controller = new AbortController();
 
-	const throttle = pThrottle({
-		limit: 2,
-		interval: 1000,
-		signal: controller.signal
-	});
+const throttle = pThrottle({
+	limit: 2,
+	interval: 1000,
+	signal: controller.signal
+});
 
-	const throttled = throttle(() => {
-		console.log('Executing...');
-	});
+const throttled = throttle(() => {
+	console.log('Executing...');
+});
 
-	await throttled();
-	await throttled();
-	controller.abort('aborted')
-	await throttled();
-	//=> Executing...
-	//=> Executing...
-	//=> Promise rejected with reason `aborted`
+await throttled();
+await throttled();
+controller.abort('aborted')
+await throttled();
+//=> Executing...
+//=> Executing...
+//=> Promise rejected with reason `aborted`
 ```
 
 ##### onDelay
