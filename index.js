@@ -1,11 +1,8 @@
-export class AbortError extends Error {
-	constructor() {
-		super('Throttled function aborted');
-		this.name = 'AbortError';
-	}
-}
+const registry = new FinalizationRegistry(({signal, aborted}) => {
+	signal?.removeEventListener('abort', aborted);
+});
 
-export default function pThrottle({limit, interval, strict, onDelay}) {
+export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 	if (!Number.isFinite(limit)) {
 		throw new TypeError('Expected `limit` to be a finite number');
 	}
@@ -91,15 +88,20 @@ export default function pThrottle({limit, interval, strict, onDelay}) {
 			});
 		};
 
-		throttled.abort = () => {
+		const aborted = () => {
 			for (const timeout of queue.keys()) {
 				clearTimeout(timeout);
-				queue.get(timeout)(new AbortError());
+				queue.get(timeout)(signal.reason);
 			}
 
 			queue.clear();
 			strictTicks.splice(0, strictTicks.length);
 		};
+
+		registry.register(throttled, {signal, aborted});
+
+		signal?.throwIfAborted();
+		signal?.addEventListener('abort', aborted, {once: true});
 
 		throttled.isEnabled = true;
 
