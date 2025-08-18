@@ -439,3 +439,39 @@ test('onDelay', async t => {
 
 	await Promise.all(promises);
 });
+
+test('supports errors in the throttled function', async t => {
+	const limit = 1;
+	const interval = 100;
+	const pause = 1;
+	const throttle = pThrottle({limit, interval});
+
+	const syncFunction = () => {
+		throw new Error('test error');
+	};
+
+	const throttledSync = throttle(syncFunction);
+
+	const asyncFunction = async () => {
+		await delay(pause);
+		throw new Error('test error');
+	};
+
+	const throttledAsync = throttle(asyncFunction);
+
+	await throttle(() => {})(); // Create a delay
+
+	try {
+		await throttledSync(); // Has delay
+	} catch (error) {
+		t.is(error.message, 'test error');
+	}
+
+	try {
+		await throttledAsync(); // Has delay
+	} catch (error) {
+		t.is(error.message, 'test error');
+	}
+
+	t.pass(); // Test passes when errors were passed through correctly and could be caught
+});
