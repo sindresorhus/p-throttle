@@ -73,7 +73,12 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 			let timeoutId;
 			return new Promise((resolve, reject) => {
 				const execute = () => {
-					resolve(function_.apply(this, arguments_));
+					try {
+						resolve(function_.apply(this, arguments_));
+					} catch (error) {
+						reject(error);
+					}
+
 					queue.delete(timeoutId);
 				};
 
