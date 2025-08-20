@@ -17,10 +17,11 @@
 	},
 	"sideEffects": false,
 	"engines": {
-		"node": ">=18"
+		"node": ">=20"
 	},
 	"scripts": {
-		"test": "xo && ava && tsd"
+		"test": "xo && ava && tsd",
+		"test-gc": "node --expose-gc gc-test"
 	},
 	"files": [
 		"index.js",
@@ -50,6 +51,7 @@
 		"ava": "^6.2.0",
 		"delay": "^6.0.0",
 		"in-range": "^3.0.0",
+		"pretty-bytes": "^7.0.1",
 		"time-span": "^5.1.0",
 		"tsd": "^0.31.2",
 		"xo": "^0.59.3"

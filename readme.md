@@ -2,7 +2,7 @@
 
 > Throttle promise-returning & async functions
 
-It also works with normal functions.
+Also works with normal functions.
 
 It rate-limits function calls without discarding them, making it ideal for external API interactions where avoiding call loss is crucial.
 
@@ -14,7 +14,7 @@ npm install p-throttle
 
 ## Usage
 
-Here, the throttled function is only called twice a second:
+This calls the function at most twice per second:
 
 ```js
 import pThrottle from 'p-throttle';
@@ -73,9 +73,9 @@ The timespan for `limit` in milliseconds.
 Type: `boolean`\
 Default: `false`
 
-Use a strict, more resource intensive, throttling algorithm. The default algorithm uses a windowed approach that will work correctly in most cases, limiting the total number of calls at the specified limit per interval window. The strict algorithm throttles each call individually, ensuring the limit is not exceeded for any interval.
+Use a strict, more resource-intensive, throttling algorithm. The default algorithm uses a windowed approach that will work correctly in most cases, limiting the total number of calls at the specified limit per interval window. The strict algorithm throttles each call individually, ensuring the limit is not exceeded for any interval.
 
-#### signal
+##### signal
 
 Type: [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
 
@@ -98,7 +98,7 @@ const throttled = throttle(() => {
 
 await throttled();
 await throttled();
-controller.abort('aborted')
+controller.abort('aborted');
 await throttled();
 //=> Executing...
 //=> Executing...

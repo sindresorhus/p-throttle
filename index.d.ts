@@ -2,7 +2,7 @@ type AnyFunction = (...arguments_: readonly any[]) => unknown;
 
 export type ThrottledFunction<F extends AnyFunction> = F & {
 	/**
-	Whether future function calls should be throttled or count towards throttling thresholds.
+	Whether future function calls should be throttled and count towards throttling thresholds.
 
 	@default true
 	*/
@@ -26,7 +26,7 @@ export type Options = {
 	readonly interval: number;
 
 	/**
-	Use a strict, more resource intensive, throttling algorithm. The default algorithm uses a windowed approach that will work correctly in most cases, limiting the total number of calls at the specified limit per interval window. The strict algorithm throttles each call individually, ensuring the limit is not exceeded for any interval.
+	Use a strict, more resource-intensive, throttling algorithm. The default algorithm uses a windowed approach that will work correctly in most cases, limiting the total number of calls at the specified limit per interval window. The strict algorithm throttles each call individually, ensuring the limit is not exceeded for any interval.
 
 	@default false
 	*/
@@ -53,7 +53,7 @@ export type Options = {
 
 	await throttled();
 	await throttled();
-	controller.abort('aborted')
+	controller.abort('aborted');
 	await throttled();
 	//=> Executing...
 	//=> Executing...
@@ -65,7 +65,7 @@ export type Options = {
 	/**
 	Get notified when function calls are delayed due to exceeding the `limit` of allowed calls within the given `interval`.
 
- 	Can be useful for monitoring the throttling efficiency.
+	The delayed call arguments are passed to the `onDelay` callback. Can be useful for monitoring the throttling efficiency.
 
 	@example
 	```
@@ -79,8 +79,8 @@ export type Options = {
 		},
 	});
 
-	const throttled = throttle(() => {
-		console.log('Executing...');
+	const throttled = throttle((a, b) => {
+		console.log(`Executing with ${a} ${b}...`);
 	});
 
 	await throttled(1, 2);
@@ -96,7 +96,9 @@ export type Options = {
 };
 
 /**
-Throttle promise-returning/async/normal functions.
+Throttle promise-returning & async functions.
+
+Also works with normal functions.
 
 It rate-limits function calls without discarding them, making it ideal for external API interactions where avoiding call loss is crucial.
 
