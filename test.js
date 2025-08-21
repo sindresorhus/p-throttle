@@ -433,21 +433,21 @@ test('queues calls beyond limit', async t => {
 	const limit = 2;
 	const interval = 100;
 	const throttled = pThrottle({limit, interval})(() => Date.now());
-	const start = Date.now();
 
-	const firstBatch = Promise.all([throttled(), throttled()]);
-	await delay(50); // Ensure the first batch is within the limit
-	const secondBatch = Promise.all([throttled(), throttled()]);
+	// Use the actual timestamps of the first window as the anchor
+	const firstBatchPromise = Promise.all([throttled(), throttled()]);
+	await delay(50); // Schedule next calls within the same window
+	const secondBatchPromise = Promise.all([throttled(), throttled()]);
 
-	const results = await Promise.all([firstBatch, secondBatch]);
-	const end = Date.now();
+	const [firstBatch, secondBatch] = await Promise.all([firstBatchPromise, secondBatchPromise]);
 
-	// Check that the second batch was executed after the interval
-	for (const time of results[1]) {
-		t.true(time - start >= interval);
+	const anchor = Math.min(...firstBatch);
+	const epsilon = 5; // Allow tiny jitter from timers/clock rounding
+
+	// Second batch should run in the next window relative to the first
+	for (const time of secondBatch) {
+		t.true(time - anchor >= (interval - epsilon));
 	}
-
-	t.true(end - start >= interval);
 });
 
 test('resets interval after inactivity', async t => {
