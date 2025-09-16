@@ -4,7 +4,7 @@
 
 Also works with normal functions.
 
-It rate-limits function calls without discarding them, making it ideal for external API interactions where avoiding call loss is crucial.
+It rate-limits function calls without discarding them, making it ideal for external API interactions where avoiding call loss is crucial. All calls are queued and executed—the last call is guaranteed to run with its original context and arguments preserved.
 
 ## Install
 

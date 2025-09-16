@@ -48,6 +48,38 @@ test('queue size', async t => {
 	t.is(throttled.queueSize, 0);
 });
 
+test('guarantees last call execution with correct context and arguments', async t => {
+	const throttled = pThrottle({limit: 2, interval: 100})(function (value) {
+		return {context: this, value};
+	});
+
+	const context = {id: 'test-context'};
+	const lastArgument = 'last-call';
+
+	// Fire multiple calls
+	const results = [
+		throttled.call(context, 'first'),
+		throttled.call(context, 'second'),
+		throttled.call(context, 'third'),
+		throttled.call(context, lastArgument), // Last call
+	];
+
+	const resolvedResults = await Promise.all(results);
+
+	// Verify all calls executed
+	t.is(resolvedResults.length, 4);
+
+	// Verify last call executed with correct context and argument
+	const lastResult = resolvedResults[3];
+	t.is(lastResult.context, context);
+	t.is(lastResult.value, lastArgument);
+
+	// Verify all calls preserved their arguments
+	t.is(resolvedResults[0].value, 'first');
+	t.is(resolvedResults[1].value, 'second');
+	t.is(resolvedResults[2].value, 'third');
+});
+
 test('strict mode', async t => {
 	const totalRuns = 100;
 	const limit = 5;
