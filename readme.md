@@ -12,6 +12,10 @@ It rate-limits function calls without discarding them, making it ideal for exter
 npm install p-throttle
 ```
 
+## Browser
+
+This package works in the browser with modern browsers that support `WeakRef` and `FinalizationRegistry` (Chrome 84+, Firefox 79+, Safari 14.1+, Edge 84+).
+
 ## Usage
 
 This calls the function at most twice per second:
