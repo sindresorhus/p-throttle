@@ -42,6 +42,7 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 		currentTick: 0,
 		activeCount: 0,
 	};
+	const strictCapacity = Math.max(limit, 1);
 
 	function windowedDelay() {
 		const now = Date.now();
@@ -66,25 +67,32 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 		const now = Date.now();
 
 		// Clear the queue if there's a significant delay since the last execution
-		if (state.strictTicks.length > 0 && now - state.strictTicks.at(-1) > interval) {
+		if (state.strictTicks.length > 0 && now - state.strictTicks.at(-1).time > interval) {
 			state.strictTicks.length = 0;
 		}
 
-		// If the queue is not full, add the current time and execute immediately
-		if (state.strictTicks.length < limit) {
-			state.strictTicks.push(now);
-			return 0;
+		// If the queue is not full (treat limit 0 as capacity 1 for seeding), add the current time and execute immediately
+		if (state.strictTicks.length < strictCapacity) {
+			state.strictTicks.push({time: now});
+			return {delay: 0};
 		}
 
-		// Calculate the next execution time based on the first item in the queue
-		const nextExecutionTime = state.strictTicks[0] + interval;
+		// Calculate next execution time: must be after oldest + interval,
+		// AND must be after the most recent to prevent multiple calls bunching up
+		const oldestTime = state.strictTicks[0].time;
+		const mostRecentTime = state.strictTicks.at(-1).time;
+		const baseTime = oldestTime + interval;
+		// Add minimum spacing to prevent bunching (except for interval=0)
+		const minSpacing = interval > 0 ? Math.ceil(interval / strictCapacity) : 0;
+		const nextExecutionTime = baseTime <= mostRecentTime ? mostRecentTime + minSpacing : baseTime;
 
-		// Shift the queue and add the new execution time
+		// Shift the queue and add a record for the new execution
 		state.strictTicks.shift();
-		state.strictTicks.push(nextExecutionTime);
+		const tickRecord = {time: nextExecutionTime};
+		state.strictTicks.push(tickRecord);
 
 		// Calculate the delay for the current execution
-		return Math.max(0, nextExecutionTime - now);
+		return {delay: Math.max(0, nextExecutionTime - now), tickRecord};
 	}
 
 	const getDelay = strict ? strictDelay : windowedDelay;
@@ -97,7 +105,16 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 
 			let timeoutId;
 			return new Promise((resolve, reject) => {
+				const delayResult = getDelay();
+				const delay = strict ? delayResult.delay : delayResult;
+				const tickRecord = strict ? delayResult.tickRecord : undefined;
+
 				const execute = () => {
+					// Update strictTicks with actual execution time to account for setTimeout drift
+					if (tickRecord) {
+						tickRecord.time = Date.now();
+					}
+
 					try {
 						resolve(function_.apply(this, arguments_));
 					} catch (error) {
@@ -107,7 +124,6 @@ export default function pThrottle({limit, interval, strict, signal, onDelay}) {
 					state.queue.delete(timeoutId);
 				};
 
-				const delay = getDelay();
 				if (delay > 0) {
 					timeoutId = setTimeout(execute, delay);
 					state.queue.set(timeoutId, reject);

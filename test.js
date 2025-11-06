@@ -97,6 +97,63 @@ test('strict mode', async t => {
 	}));
 });
 
+test('strict mode handles limit 0 without crashing', async t => {
+	const interval = 50;
+	const onDelayCalls = [];
+	const throttled = pThrottle({
+		limit: 0,
+		interval,
+		strict: true,
+		onDelay(...arguments_) {
+			onDelayCalls.push(arguments_);
+		},
+	})(async value => ({value, time: Date.now()}));
+	const start = Date.now();
+
+	const first = await throttled('first');
+	t.is(first.value, 'first');
+	t.true(first.time - start < 30);
+
+	const secondPromise = throttled('second');
+	t.deepEqual(onDelayCalls[0], ['second']);
+
+	const second = await secondPromise;
+	t.is(second.value, 'second');
+	t.true(inRange(second.time - first.time, {
+		start: Math.max(0, interval - 10),
+		end: interval + 100,
+	}));
+});
+
+test('strict mode never exceeds the limit within an interval', async t => {
+	const limit = 2;
+	const interval = 80;
+	const strict = true;
+	const throttled = pThrottle({limit, interval, strict})(() => Date.now());
+	const calls = Array.from({length: 8}, () => throttled());
+	const times = await Promise.all(calls);
+
+	for (let index = limit; index < times.length; index++) {
+		const windowGap = times[index] - times[index - limit];
+		t.true(windowGap >= interval - 20, `Call ${index} occurred too soon after call ${index - limit}`);
+	}
+});
+
+test('strict mode enforces spacing between saturated executions', async t => {
+	const limit = 3;
+	const interval = 90;
+	const strict = true;
+	const minSpacing = Math.ceil(interval / limit);
+	const throttled = pThrottle({limit, interval, strict})(() => Date.now());
+	const calls = Array.from({length: limit * 3}, () => throttled());
+	const times = await Promise.all(calls);
+
+	for (let index = limit; index < times.length; index++) {
+		const diff = times[index] - times[index - 1];
+		t.true(diff >= minSpacing - 10, `Call ${index} should be spaced by at least ${minSpacing}ms`);
+	}
+});
+
 test('limits after pause in strict mode', async t => {
 	const limit = 10;
 	const interval = 100;
@@ -966,4 +1023,37 @@ test('FinalizationRegistry WeakRef behavior with signal registration', async t =
 	t.is(result1.reason, 'weakref-test');
 	t.is(result2.status, 'rejected');
 	t.is(result2.reason, 'weakref-test');
+});
+
+test('strict mode handles setTimeout drift', async t => {
+	const limit = 10;
+	const interval = 100;
+	const totalCalls = 100;
+
+	const throttled = pThrottle({limit, interval, strict: true})(() => Date.now());
+
+	const promises = [];
+	for (let i = 0; i < totalCalls; i++) {
+		promises.push(throttled());
+	}
+
+	const executionTimes = await Promise.all(promises);
+
+	// Verify that within any interval window, no more than limit calls were executed
+	// We check all sliding windows to ensure the rate limit is never exceeded
+	for (let i = 0; i < executionTimes.length; i++) {
+		let count = 0;
+		const windowStart = executionTimes[i];
+
+		for (let index = i; index < executionTimes.length; index++) {
+			if (executionTimes[index] - windowStart < interval) {
+				count++;
+			} else {
+				break;
+			}
+		}
+
+		// Allow slight buffer for timing inaccuracies, but should never exceed limit significantly
+		t.true(count <= limit + 1, `Window starting at call ${i} had ${count} calls, exceeds limit of ${limit}`);
+	}
 });
