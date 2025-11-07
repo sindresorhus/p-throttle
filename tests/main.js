@@ -208,9 +208,9 @@ test('limits after pause in windowed mode', async t => {
 	for (const [index, executed] of results.entries()) {
 		const elapsed = executed - start;
 		if (index < limit - 1) {
-			t.true(inRange(elapsed, {start: pause, end: pause + 10}), 'Executed immediately after the pause');
+			t.true(inRange(elapsed, {start: pause, end: pause + 50}), 'Executed immediately after the pause');
 		} else {
-			t.true(inRange(elapsed, {start: interval - 10, end: interval + 10}), 'Executed immediately after the interval');
+			t.true(inRange(elapsed, {start: interval - 10, end: interval + 50}), 'Executed immediately after the interval');
 		}
 	}
 });

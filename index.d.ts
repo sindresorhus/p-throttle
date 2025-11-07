@@ -10,6 +10,26 @@ export type ThrottledFunction<F extends AnyFunction> = F & {
 
 	/**
 	The number of queued items waiting to be executed.
+
+	This can be useful for implementing queue management strategies, such as using a fallback when the queue is too full.
+
+	@example
+	```
+	import pThrottle from 'p-throttle';
+
+	const throttle = pThrottle({limit: 1, interval: 1000});
+
+	const accurateData = throttle(() => fetch('https://accurate-api.example.com'));
+	const roughData = () => fetch('https://rough-api.example.com');
+
+	async function getData() {
+		if (accurateData.queueSize >= 3) {
+			return roughData(); // Queue full, use fallback
+		}
+
+		return accurateData();
+	}
+	```
 	*/
 	readonly queueSize: number;
 };

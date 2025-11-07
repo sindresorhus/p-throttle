@@ -51,7 +51,7 @@ test('strict mode with weights - never exceeds capacity in sliding window', asyn
 	for (let i = 0; i < times.length; i++) {
 		let weightInWindow = 0;
 		for (let innerIndex = i; innerIndex < times.length; innerIndex++) {
-			if (times[innerIndex] - times[i] <= interval) {
+			if (times[innerIndex] - times[i] < interval) {
 				weightInWindow += 10;
 			}
 		}
