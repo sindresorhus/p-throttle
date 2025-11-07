@@ -3,7 +3,7 @@ import test from 'ava';
 import inRange from 'in-range';
 import timeSpan from 'time-span';
 import delay from 'delay';
-import pThrottle from './index.js';
+import pThrottle from '../index.js';
 
 const fixture = Symbol('fixture');
 

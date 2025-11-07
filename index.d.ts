@@ -93,6 +93,38 @@ export type Options = {
 	```
 	*/
 	readonly onDelay?: (...arguments_: readonly any[]) => void;
+
+	/**
+	Calculate the weight/cost of each function call based on its arguments.
+
+	The weight determines how much of the `limit` is consumed by each call. This is useful for rate limiting APIs that use point-based or cost-based limits, where different operations consume different amounts of the quota.
+
+	By default, each call has a weight of `1`.
+
+	In the following example, queries with different numbers of tables consume different amounts of the rate limit:
+
+	@example
+	```
+	import pThrottle from 'p-throttle';
+
+	// Storyblok GraphQL API: 100 points per second
+	// Each query costs 1 point for the connection plus 1 point per table
+	const throttle = pThrottle({
+		limit: 100,
+		interval: 1000,
+		weight: numberOfTables => 1 + numberOfTables
+	});
+
+	const fetchData = throttle(numberOfTables => {
+		// Fetch GraphQL data
+		return fetch('...');
+	});
+
+	await fetchData(1); // Costs 2 points
+	await fetchData(3); // Costs 4 points
+	```
+	*/
+	readonly weight?: (...arguments_: readonly any[]) => number;
 };
 
 /**
