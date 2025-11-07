@@ -43,6 +43,14 @@ export default function pThrottle({limit, interval, strict, signal, onDelay, wei
 		throw new TypeError('The `weight` option cannot be used with `interval` of 0');
 	}
 
+	// TODO: Uncomment in next major version (breaking change)
+	// The combination of strict mode with interval=0 doesn't enforce the limit correctly
+	// (minSpacing becomes 0, allowing unlimited calls in the same millisecond).
+	// For now, we allow it to avoid breaking existing code, but it should be rejected in v9.
+	// if (strict && interval === 0) {
+	// 	throw new TypeError('The `strict` option cannot be used with `interval` of 0');
+	// }
+
 	const state = {
 		queue: new Map(),
 		strictTicks: [],

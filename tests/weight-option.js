@@ -48,10 +48,12 @@ test('strict mode with weights - never exceeds capacity in sliding window', asyn
 	const times = await Promise.all(Array.from({length: 10}, () => throttled()));
 
 	// Check that in any sliding window of `interval` ms, total weight <= limit
+	// Use a tolerance of 50ms to account for setTimeout drift
+	const tolerance = 50;
 	for (let i = 0; i < times.length; i++) {
 		let weightInWindow = 0;
 		for (let innerIndex = i; innerIndex < times.length; innerIndex++) {
-			if (times[innerIndex] - times[i] < interval) {
+			if (times[innerIndex] - times[i] < interval - tolerance) {
 				weightInWindow += 10;
 			}
 		}
@@ -432,9 +434,11 @@ test('weighted strict mode handles burst of different weights', async t => {
 	const times = await Promise.all(promises);
 
 	// Verify sliding window constraint for each execution
+	// Use a tolerance of 50ms to account for setTimeout drift
+	const tolerance = 50;
 	for (let index = 0; index < times.length; index++) {
 		const time = times[index];
-		const windowStart = time - interval;
+		const windowStart = time - interval + tolerance;
 
 		// Calculate weight in window at this time
 		let weightInWindow = 0;

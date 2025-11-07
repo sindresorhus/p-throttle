@@ -401,6 +401,8 @@ test('handles zero interval', async t => {
 });
 
 test('handles zero interval in strict mode with no delays and no onDelay', async t => {
+	// NOTE: This configuration is buggy (doesn't enforce limit correctly) and will be
+	// rejected in v9. For now we allow it for backwards compatibility.
 	const seen = [];
 	const throttled = pThrottle({
 		limit: 3,
@@ -1056,4 +1058,188 @@ test('strict mode handles setTimeout drift', async t => {
 		// Allow slight buffer for timing inaccuracies, but should never exceed limit significantly
 		t.true(count <= limit + 1, `Window starting at call ${i} had ${count} calls, exceeds limit of ${limit}`);
 	}
+});
+
+test('strict weighted mode with sequential scheduling respects future ticks', async t => {
+	const limit = 2;
+	const interval = 300;
+	const executionTimes = [];
+
+	const throttle = pThrottle({
+		limit,
+		interval,
+		strict: true,
+		weight: () => 1,
+	});
+
+	const throttled = throttle(() => {
+		const now = Date.now();
+		executionTimes.push(now);
+		return now;
+	});
+
+	// Schedule first call, then schedule more while first is still scheduled
+	await throttled(); // Executes immediately
+
+	const promise2 = throttled(); // Gets scheduled for future
+	const promise3 = throttled(); // Must consider promise2's future tick
+	const promise4 = throttled(); // Must consider promise2 and promise3's future ticks
+
+	await Promise.all([promise2, promise3, promise4]);
+
+	// Check all backward-looking sliding windows
+	// Use a tolerance of 50ms to account for setTimeout drift
+	const tolerance = 50;
+	for (const endTime of executionTimes) {
+		const windowStart = endTime - interval + tolerance;
+		let count = 0;
+		for (const time of executionTimes) {
+			if (time > windowStart && time <= endTime) {
+				count++;
+			}
+		}
+
+		t.true(count <= limit, `Backward window has ${count} executions, limit is ${limit}`);
+	}
+});
+
+test('strict weighted mode with heavy weights and future ticks', async t => {
+	const limit = 100;
+	const interval = 400;
+	const executionTimes = [];
+
+	const throttle = pThrottle({
+		limit,
+		interval,
+		strict: true,
+		weight: value => value,
+	});
+
+	const throttled = throttle(value => {
+		const now = Date.now();
+		executionTimes.push({time: now, weight: value});
+		return now;
+	});
+
+	// Schedule calls with different weights
+	// Total weight should never exceed limit in any interval window
+	const promises = [
+		throttled(60), // Should execute immediately
+		throttled(50), // Should be delayed to avoid exceeding 100
+		throttled(30), // Should consider both previous scheduled ticks
+		throttled(40), // Should consider all previous scheduled ticks
+	];
+
+	const results = await Promise.all(promises);
+
+	// Verify weight constraint in all BACKWARD-LOOKING windows (strict mode semantics)
+	// Use a tolerance of 50ms to account for setTimeout drift
+	const tolerance = 50;
+	for (const [index, {time: endTime, weight: _}] of executionTimes.entries()) {
+		const windowStart = endTime - interval + tolerance;
+		let weightInWindow = 0;
+		for (const {time, weight} of executionTimes) {
+			if (time > windowStart && time <= endTime) {
+				weightInWindow += weight;
+			}
+		}
+
+		t.true(
+			weightInWindow <= limit,
+			`Backward window ending at index ${index} has weight ${weightInWindow}, exceeds limit ${limit}`,
+		);
+	}
+
+	// First call should be immediate, second should wait
+	t.true(results[1] - results[0] >= interval - 50, 'Second heavy call should wait for interval');
+});
+
+test('strict weighted mode with mixed immediate and delayed calls', async t => {
+	const limit = 50;
+	const interval = 300;
+
+	const throttle = pThrottle({
+		limit,
+		interval,
+		strict: true,
+		weight: value => value,
+	});
+
+	const throttled = throttle(() => Date.now());
+
+	// Execute some calls that fill capacity
+	const time1 = await throttled(30);
+	const time2 = await throttled(20);
+
+	// Now burst several more - they should all consider existing scheduled ticks
+	const promises = [
+		throttled(15), // Would fit if checking only past ticks
+		throttled(20), // But these should be properly delayed
+		throttled(25),
+	];
+
+	const [time3] = await Promise.all(promises);
+
+	// First two should execute immediately (total 50)
+	t.true(time2 - time1 < 50, 'First two calls execute together');
+
+	// Third call should be delayed because capacity is full
+	t.true(time3 - time1 >= interval - 50, 'Third call waits for capacity');
+});
+
+// Tests for Bug 2: strict mode with interval=0
+// TODO: Uncomment in v9 (breaking change)
+// test('strict mode with interval=0 is rejected', t => {
+// 	t.throws(
+// 		() => pThrottle({
+// 			limit: 10,
+// 			interval: 0,
+// 			strict: true,
+// 		}),
+// 		{
+// 			instanceOf: TypeError,
+// 			message: 'The `strict` option cannot be used with `interval` of 0',
+// 		},
+// 	);
+// });
+
+test('weight with interval=0 is rejected', t => {
+	t.throws(
+		() => pThrottle({
+			limit: 10,
+			interval: 0,
+			weight: () => 1,
+		}),
+		{
+			instanceOf: TypeError,
+			message: 'The `weight` option cannot be used with `interval` of 0',
+		},
+	);
+});
+
+test('non-strict mode with interval=0 still works', async t => {
+	const throttle = pThrottle({
+		limit: 5,
+		interval: 0,
+		strict: false,
+	});
+
+	const throttled = throttle(() => Date.now());
+
+	const start = Date.now();
+	const results = await Promise.all([
+		throttled(),
+		throttled(),
+		throttled(),
+		throttled(),
+		throttled(),
+	]);
+	const end = Date.now();
+
+	// All should execute immediately with interval=0
+	for (const time of results) {
+		t.true(time - start < 50);
+	}
+
+	t.true(end - start < 50);
 });
