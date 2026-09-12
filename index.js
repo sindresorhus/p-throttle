@@ -91,6 +91,46 @@ export default function pThrottle({limit, interval, strict, signal, onDelay, wei
 		return state.currentTick - now;
 	}
 
+	function weightedDelay(requestWeight, now, ticks) {
+		// Check both the requested time and future reservations that would share a window with this call. A smaller call must not steal capacity already reserved for a later, heavier call.
+		const findBlockingTick = time => {
+			let windowStart = 0;
+			let windowWeight = 0;
+
+			for (const [index, tick] of ticks.entries()) {
+				if (tick.time >= time + interval) {
+					break;
+				}
+
+				windowWeight += tick.weight;
+				const windowEnd = Math.max(time, tick.time);
+				while (windowStart <= index && ticks[windowStart].time <= windowEnd - interval) {
+					windowWeight -= ticks[windowStart].weight;
+					windowStart++;
+				}
+
+				if (windowWeight + requestWeight > limit) {
+					return ticks[windowStart];
+				}
+			}
+		};
+
+		let nextExecutionTime = now;
+		let blockingTick = findBlockingTick(nextExecutionTime);
+		while (blockingTick) {
+			nextExecutionTime = blockingTick.time + interval;
+			blockingTick = findBlockingTick(nextExecutionTime);
+		}
+
+		const tickRecord = {
+			time: nextExecutionTime,
+			weight: requestWeight,
+			isExecuted: false,
+		};
+		insertTickSorted(tickRecord);
+		return {delay: Math.max(0, nextExecutionTime - now), tickRecord};
+	}
+
 	function strictDelay(requestWeight) {
 		const now = Date.now();
 
@@ -106,46 +146,7 @@ export default function pThrottle({limit, interval, strict, signal, onDelay, wei
 				state.strictTicks.shift();
 			}
 
-			// Check both the requested time and future reservations that would
-			// share a window with this call. A smaller call must not steal
-			// capacity already reserved for a later, heavier call.
-			const findBlockingTick = time => {
-				let windowStart = 0;
-				let windowWeight = 0;
-
-				for (const [index, tick] of state.strictTicks.entries()) {
-					if (tick.time >= time + interval) {
-						break;
-					}
-
-					windowWeight += tick.weight;
-					const windowEnd = Math.max(time, tick.time);
-					while (windowStart <= index && state.strictTicks[windowStart].time <= windowEnd - interval) {
-						windowWeight -= state.strictTicks[windowStart].weight;
-						windowStart++;
-					}
-
-					if (windowWeight + requestWeight > limit) {
-						return state.strictTicks[windowStart];
-					}
-				}
-			};
-
-			let nextExecutionTime = now;
-			let blockingTick = findBlockingTick(nextExecutionTime);
-			while (blockingTick) {
-				nextExecutionTime = blockingTick.time + interval;
-				blockingTick = findBlockingTick(nextExecutionTime);
-			}
-
-			if (nextExecutionTime === now) {
-				insertTickSorted({time: now, weight: requestWeight});
-				return {delay: 0};
-			}
-
-			const tickRecord = {time: nextExecutionTime, weight: requestWeight};
-			insertTickSorted(tickRecord);
-			return {delay: Math.max(0, nextExecutionTime - now), tickRecord};
+			return weightedDelay(requestWeight, now, state.strictTicks);
 		}
 
 		// For non-weighted throttling, use count-based queue (original algorithm)
@@ -207,19 +208,31 @@ export default function pThrottle({limit, interval, strict, signal, onDelay, wei
 
 				const delayResult = getDelay(requestWeight);
 				const delay = strict ? delayResult.delay : delayResult;
-				const tickRecord = strict ? delayResult.tickRecord : undefined;
+				let tickRecord = strict ? delayResult.tickRecord : undefined;
 
 				const execute = () => {
-					// Update strictTicks with actual execution time to account for setTimeout drift
+					// Revalidate weighted calls at execution time to account for timer drift
 					if (tickRecord) {
 						const actualTime = Date.now();
 
-						// For weighted throttling with drift, maintain sorted order
-						if (weight && tickRecord.time !== actualTime) {
-							tickRecord.time = actualTime;
+						if (weight) {
 							const index = state.strictTicks.indexOf(tickRecord);
-							state.strictTicks.splice(index, 1);
-							insertTickSorted(tickRecord);
+							if (index !== -1) {
+								state.strictTicks.splice(index, 1);
+							}
+
+							const executedTicks = state.strictTicks.filter(tick => tick.isExecuted);
+							const updatedDelayResult = weightedDelay(requestWeight, actualTime, executedTicks);
+							tickRecord = updatedDelayResult.tickRecord;
+
+							if (updatedDelayResult.delay > 0) {
+								state.queue.delete(timeoutId);
+								timeoutId = setTimeout(execute, updatedDelayResult.delay);
+								state.queue.set(timeoutId, reject);
+								return;
+							}
+
+							tickRecord.isExecuted = true;
 						} else {
 							tickRecord.time = actualTime;
 						}

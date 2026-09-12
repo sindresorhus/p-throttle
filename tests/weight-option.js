@@ -713,13 +713,12 @@ test('weighted strict mode executes when capacity available', async t => {
 	t.is(results.length, 3);
 });
 
-test('weighted strict mode protects future reservations when smaller calls arrive later', async t => {
+async function withFakeTimers(body) {
 	const originalNow = Date.now;
 	const originalSetTimeout = globalThis.setTimeout;
 	const originalClearTimeout = globalThis.clearTimeout;
 	let now = 1000;
 	const timers = new Set();
-	const executions = [];
 
 	Date.now = () => now;
 	globalThis.setTimeout = (callback, delay) => {
@@ -730,37 +729,342 @@ test('weighted strict mode protects future reservations when smaller calls arriv
 
 	globalThis.clearTimeout = timer => timers.delete(timer);
 
+	const runTimer = (timer, drift) => {
+		if (!timer) {
+			throw new Error('Expected a pending timer');
+		}
+
+		timers.delete(timer);
+		now = Math.max(now, timer.time) + drift;
+		timer.callback();
+	};
+
 	try {
-		const throttled = pThrottle({
-			limit: 5, interval: 100, strict: true, weight: value => value,
-		})(weight => {
-			executions.push({time: now, weight});
+		await body({
+			get now() {
+				return now;
+			},
+			set now(value) {
+				now = value;
+			},
+			get pendingTimerCount() {
+				return timers.size;
+			},
+			runNext(drift = 0) {
+				const timer = [...timers].sort((firstTimer, secondTimer) => firstTimer.time - secondTimer.time)[0];
+				runTimer(timer, drift);
+			},
+			runLast(drift = 0) {
+				const timer = [...timers].sort((firstTimer, secondTimer) => secondTimer.time - firstTimer.time)[0];
+				runTimer(timer, drift);
+			},
 		});
-		const first = throttled(4);
-		const reserved = throttled(5);
-		now = 1050;
-		const later = throttled(1);
-		const free = throttled(0);
-		t.deepEqual(executions.at(-1), {time: 1050, weight: 0});
-
-		while (timers.size > 0) {
-			const timer = [...timers].sort((a, b) => a.time - b.time)[0];
-			timers.delete(timer);
-			now = timer.time;
-			timer.callback();
-		}
-
-		await Promise.all([first, reserved, later, free]);
-
-		for (const {time} of executions) {
-			const total = executions
-				.filter(entry => entry.time <= time && time - entry.time < 100)
-				.reduce((sum, entry) => sum + entry.weight, 0);
-			t.true(total <= 5, `Weight ${total} exceeds capacity at ${time}`);
-		}
 	} finally {
 		Date.now = originalNow;
 		globalThis.setTimeout = originalSetTimeout;
 		globalThis.clearTimeout = originalClearTimeout;
 	}
+}
+
+function assertWeightLimit(t, executions, limit, interval) {
+	for (const {time} of executions) {
+		let total = 0;
+		for (const execution of executions) {
+			if (execution.time <= time && time - execution.time < interval) {
+				total += execution.weight;
+			}
+		}
+
+		t.true(total <= limit, `Weight ${total} exceeds capacity at ${time}`);
+	}
+}
+
+test('weighted strict mode protects future reservations when smaller calls arrive later', async t => {
+	await withFakeTimers(async clock => {
+		const executions = [];
+		const throttled = pThrottle({
+			limit: 5, interval: 100, strict: true, weight: value => value,
+		})(weight => {
+			executions.push({time: clock.now, weight});
+		});
+		const first = throttled(4);
+		const reserved = throttled(5);
+		clock.now = 1050;
+		const later = throttled(1);
+		const free = throttled(0);
+		t.deepEqual(executions.at(-1), {time: 1050, weight: 0});
+
+		while (clock.pendingTimerCount > 0) {
+			clock.runNext();
+		}
+
+		await Promise.all([first, reserved, later, free]);
+		assertWeightLimit(t, executions, 5, 100);
+	});
+});
+
+test('weighted strict mode revalidates delayed executions after timer drift', async t => {
+	await withFakeTimers(async clock => {
+		const executions = [];
+		const throttled = pThrottle({
+			limit: 5,
+			interval: 100,
+			strict: true,
+			weight: value => value,
+		})(weight => {
+			executions.push({time: clock.now, weight});
+		});
+		const first = throttled(5);
+		const second = throttled(5);
+		const third = throttled(5);
+		t.is(throttled.queueSize, 2);
+		clock.runNext(50);
+		t.is(throttled.queueSize, 1);
+		clock.runNext();
+		t.is(throttled.queueSize, 1);
+		clock.runNext();
+
+		await Promise.all([first, second, third]);
+		t.is(throttled.queueSize, 0);
+		t.deepEqual(executions, [
+			{time: 1000, weight: 5},
+			{time: 1150, weight: 5},
+			{time: 1250, weight: 5},
+		]);
+		assertWeightLimit(t, executions, 5, 100);
+	});
+});
+
+test('weighted strict mode handles drift for reservations at the same time', async t => {
+	await withFakeTimers(async clock => {
+		const executions = [];
+		const throttled = pThrottle({
+			limit: 10,
+			interval: 100,
+			strict: true,
+			weight: value => value,
+		})(weight => {
+			executions.push({time: clock.now, weight});
+		});
+		const weights = [6, 4, 7, 3, 5, 5];
+		const promises = weights.map(weight => throttled(weight));
+
+		clock.runNext(50);
+		while (clock.pendingTimerCount > 0) {
+			clock.runNext();
+		}
+
+		await Promise.all(promises);
+		t.deepEqual(executions, [
+			{time: 1000, weight: 6},
+			{time: 1000, weight: 4},
+			{time: 1150, weight: 7},
+			{time: 1150, weight: 3},
+			{time: 1250, weight: 5},
+			{time: 1250, weight: 5},
+		]);
+		assertWeightLimit(t, executions, 10, 100);
+	});
+});
+
+test('weighted strict mode revalidates timers that fire out of order', async t => {
+	await withFakeTimers(async clock => {
+		const executions = [];
+		const throttled = pThrottle({
+			limit: 5,
+			interval: 100,
+			strict: true,
+			weight: request => request.weight,
+		})(request => {
+			executions.push({...request, time: clock.now});
+		});
+		const first = throttled({name: 'first', weight: 5});
+		const second = throttled({name: 'second', weight: 5});
+		const third = throttled({name: 'third', weight: 5});
+
+		clock.runLast(50);
+		let timerExecutions = 1;
+		while (clock.pendingTimerCount > 0) {
+			clock.runNext();
+			timerExecutions++;
+			t.true(timerExecutions < 10, 'Timers did not settle');
+		}
+
+		await Promise.all([first, second, third]);
+		t.deepEqual(executions.map(execution => execution.name).toSorted(), ['first', 'second', 'third']);
+		assertWeightLimit(t, executions, 5, 100);
+	});
+});
+
+test('weighted strict mode revalidates a reservation removed as stale', async t => {
+	await withFakeTimers(async clock => {
+		const executions = [];
+		const throttled = pThrottle({
+			limit: 5,
+			interval: 100,
+			strict: true,
+			weight: request => request.weight,
+		})(request => {
+			executions.push({...request, time: clock.now});
+		});
+		const first = throttled({name: 'first', weight: 5});
+		const second = throttled({name: 'second', weight: 5});
+		clock.now = 1250;
+		const third = throttled({name: 'third', weight: 5});
+
+		clock.runNext();
+		clock.runNext();
+
+		await Promise.all([first, second, third]);
+		t.deepEqual(executions.map(execution => execution.name), ['first', 'third', 'second']);
+		assertWeightLimit(t, executions, 5, 100);
+	});
+});
+
+test('weighted strict mode accounts for calls arriving after drift', async t => {
+	await withFakeTimers(async clock => {
+		const executions = [];
+		const throttled = pThrottle({
+			limit: 5,
+			interval: 100,
+			strict: true,
+			weight: value => value,
+		})(weight => {
+			executions.push({time: clock.now, weight});
+		});
+		const first = throttled(5);
+		const second = throttled(5);
+		const third = throttled(5);
+		clock.runNext(50);
+		clock.now = 1175;
+		const later = throttled(1);
+
+		while (clock.pendingTimerCount > 0) {
+			clock.runNext();
+		}
+
+		await Promise.all([first, second, third, later]);
+		assertWeightLimit(t, executions, 5, 100);
+	});
+});
+
+test('weighted strict mode aborts a call rescheduled after drift', async t => {
+	await withFakeTimers(async clock => {
+		const controller = new AbortController();
+		const executions = [];
+		const throttled = pThrottle({
+			limit: 5,
+			interval: 100,
+			strict: true,
+			signal: controller.signal,
+			weight: value => value,
+		})(weight => {
+			executions.push({time: clock.now, weight});
+		});
+		const first = throttled(5);
+		const second = throttled(5);
+		const third = throttled(5);
+		clock.runNext(50);
+		clock.runNext();
+		t.is(throttled.queueSize, 1);
+		const abortReason = new Error('Stop after timer drift');
+		controller.abort(abortReason);
+
+		await Promise.all([first, second]);
+		await t.throwsAsync(third, {is: abortReason});
+		t.is(clock.pendingTimerCount, 0);
+		t.is(throttled.queueSize, 0);
+		assertWeightLimit(t, executions, 5, 100);
+	});
+});
+
+test('weighted strict mode calls onDelay once when drift reschedules a call', async t => {
+	await withFakeTimers(async clock => {
+		let delayCount = 0;
+		let executionCount = 0;
+		const throttled = pThrottle({
+			limit: 5,
+			interval: 100,
+			strict: true,
+			weight: value => value,
+			onDelay() {
+				delayCount++;
+			},
+		})(() => {
+			executionCount++;
+		});
+		const first = throttled(5);
+		const second = throttled(5);
+		const third = throttled(5);
+		t.is(delayCount, 2);
+
+		clock.runNext(50);
+		clock.runNext();
+		t.is(clock.pendingTimerCount, 1);
+		t.is(throttled.queueSize, 1);
+		t.is(executionCount, 2);
+		t.is(delayCount, 2);
+		clock.runNext();
+
+		await Promise.all([first, second, third]);
+		t.is(delayCount, 2);
+	});
+});
+
+test('weighted strict mode supports reentrant calls after timer drift', async t => {
+	await withFakeTimers(async clock => {
+		const executions = [];
+		let reentrantCall;
+		const throttled = pThrottle({
+			limit: 5,
+			interval: 100,
+			strict: true,
+			weight: request => request.weight,
+		})(request => {
+			executions.push({...request, time: clock.now});
+			if (request.name === 'second') {
+				reentrantCall = throttled({name: 'reentrant', weight: 5});
+			}
+		});
+		const first = throttled({name: 'first', weight: 5});
+		const second = throttled({name: 'second', weight: 5});
+		const third = throttled({name: 'third', weight: 5});
+		clock.runNext(50);
+
+		while (clock.pendingTimerCount > 0) {
+			clock.runNext();
+		}
+
+		await Promise.all([first, second, third, reentrantCall]);
+		t.deepEqual(executions.map(execution => execution.name), ['first', 'second', 'third', 'reentrant']);
+		assertWeightLimit(t, executions, 5, 100);
+	});
+});
+
+test('weighted strict mode settles many calls after an initial timer drift', async t => {
+	await withFakeTimers(async clock => {
+		const executions = [];
+		const throttled = pThrottle({
+			limit: 10,
+			interval: 100,
+			strict: true,
+			weight: value => value,
+		})(weight => {
+			executions.push({time: clock.now, weight});
+		});
+		const weights = [6, 4, 5, 5, 3, 7, 8, 2, 4, 6, 1, 9];
+		const promises = weights.map(weight => throttled(weight));
+		let timerExecutions = 0;
+
+		clock.runNext(50);
+		timerExecutions++;
+		while (clock.pendingTimerCount > 0) {
+			clock.runNext();
+			timerExecutions++;
+			t.true(timerExecutions < 100, 'Timers did not settle');
+		}
+
+		await Promise.all(promises);
+		assertWeightLimit(t, executions, 10, 100);
+	});
 });
