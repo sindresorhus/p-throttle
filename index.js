@@ -106,36 +106,41 @@ export default function pThrottle({limit, interval, strict, signal, onDelay, wei
 				state.strictTicks.shift();
 			}
 
-			const weightInWindowAt = time => {
-				let total = 0;
-				for (const tick of state.strictTicks) {
-					if (tick.time <= time && time - tick.time < interval) {
-						total += tick.weight;
+			// Check both the requested time and future reservations that would
+			// share a window with this call. A smaller call must not steal
+			// capacity already reserved for a later, heavier call.
+			const findBlockingTick = time => {
+				let windowStart = 0;
+				let windowWeight = 0;
+
+				for (const [index, tick] of state.strictTicks.entries()) {
+					if (tick.time >= time + interval) {
+						break;
+					}
+
+					windowWeight += tick.weight;
+					const windowEnd = Math.max(time, tick.time);
+					while (windowStart <= index && state.strictTicks[windowStart].time <= windowEnd - interval) {
+						windowWeight -= state.strictTicks[windowStart].weight;
+						windowStart++;
+					}
+
+					if (windowWeight + requestWeight > limit) {
+						return state.strictTicks[windowStart];
 					}
 				}
-
-				return total;
 			};
 
-			// Execute immediately if capacity available
-			if (weightInWindowAt(now) + requestWeight <= limit) {
-				const tickRecord = {time: now, weight: requestWeight};
-				insertTickSorted(tickRecord);
-				return {delay: 0};
+			let nextExecutionTime = now;
+			let blockingTick = findBlockingTick(nextExecutionTime);
+			while (blockingTick) {
+				nextExecutionTime = blockingTick.time + interval;
+				blockingTick = findBlockingTick(nextExecutionTime);
 			}
 
-			// Find earliest time when window will have room
-			let nextExecutionTime = now;
-			while (weightInWindowAt(nextExecutionTime) + requestWeight > limit) {
-				const firstInWindow = state.strictTicks.find(tick =>
-					tick.time <= nextExecutionTime && nextExecutionTime - tick.time < interval,
-				);
-
-				if (!firstInWindow) {
-					break;
-				}
-
-				nextExecutionTime = firstInWindow.time + interval;
+			if (nextExecutionTime === now) {
+				insertTickSorted({time: now, weight: requestWeight});
+				return {delay: 0};
 			}
 
 			const tickRecord = {time: nextExecutionTime, weight: requestWeight};

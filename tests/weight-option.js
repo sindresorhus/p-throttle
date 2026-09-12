@@ -712,3 +712,55 @@ test('weighted strict mode executes when capacity available', async t => {
 	t.true(results.includes(40));
 	t.is(results.length, 3);
 });
+
+test('weighted strict mode protects future reservations when smaller calls arrive later', async t => {
+	const originalNow = Date.now;
+	const originalSetTimeout = globalThis.setTimeout;
+	const originalClearTimeout = globalThis.clearTimeout;
+	let now = 1000;
+	const timers = new Set();
+	const executions = [];
+
+	Date.now = () => now;
+	globalThis.setTimeout = (callback, delay) => {
+		const timer = {callback, time: now + delay};
+		timers.add(timer);
+		return timer;
+	};
+
+	globalThis.clearTimeout = timer => timers.delete(timer);
+
+	try {
+		const throttled = pThrottle({
+			limit: 5, interval: 100, strict: true, weight: value => value,
+		})(weight => {
+			executions.push({time: now, weight});
+		});
+		const first = throttled(4);
+		const reserved = throttled(5);
+		now = 1050;
+		const later = throttled(1);
+		const free = throttled(0);
+		t.deepEqual(executions.at(-1), {time: 1050, weight: 0});
+
+		while (timers.size > 0) {
+			const timer = [...timers].sort((a, b) => a.time - b.time)[0];
+			timers.delete(timer);
+			now = timer.time;
+			timer.callback();
+		}
+
+		await Promise.all([first, reserved, later, free]);
+
+		for (const {time} of executions) {
+			const total = executions
+				.filter(entry => entry.time <= time && time - entry.time < 100)
+				.reduce((sum, entry) => sum + entry.weight, 0);
+			t.true(total <= 5, `Weight ${total} exceeds capacity at ${time}`);
+		}
+	} finally {
+		Date.now = originalNow;
+		globalThis.setTimeout = originalSetTimeout;
+		globalThis.clearTimeout = originalClearTimeout;
+	}
+});
